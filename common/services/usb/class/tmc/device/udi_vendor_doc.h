@@ -91,8 +91,8 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_vendor;
  /**
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
-#if UDI_VENDOR_EPS_SIZE_INT_FS
-# define UDI_VENDOR_EPS_INT_DESC \
+#if UDI_TMC_EPS_SIZE_INT_FS
+# define UDI_TMC_EPS_INT_DESC \
 	.ep_interrupt_in.bLength           = sizeof(usb_ep_desc_t),\
 	.ep_interrupt_in.bDescriptorType   = USB_DT_ENDPOINT,\
 	.ep_interrupt_in.bEndpointAddress  = UDI_VENDOR_EP_INTERRUPT_IN,\
@@ -104,22 +104,22 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_vendor;
 	.ep_interrupt_out.bmAttributes     = USB_EP_TYPE_INTERRUPT,\
 	.ep_interrupt_out.bInterval        = 1,
 
-# define UDI_VENDOR_EPS_INT_DESC_FS \
-	.ep_interrupt_in.wMaxPacketSize    = LE16(UDI_VENDOR_EPS_SIZE_INT_FS),\
-	.ep_interrupt_out.wMaxPacketSize   = LE16(UDI_VENDOR_EPS_SIZE_INT_FS),
+# define UDI_TMC_EPS_INT_DESC_FS \
+	.ep_interrupt_in.wMaxPacketSize    = LE16(UDI_TMC_EPS_SIZE_INT_FS),\
+	.ep_interrupt_out.wMaxPacketSize   = LE16(UDI_TMC_EPS_SIZE_INT_FS),
 
-# define UDI_VENDOR_EPS_INT_DESC_HS \
-	.ep_interrupt_in.wMaxPacketSize    = LE16(UDI_VENDOR_EPS_SIZE_INT_HS),\
-	.ep_interrupt_out.wMaxPacketSize   = LE16(UDI_VENDOR_EPS_SIZE_INT_HS),
+# define UDI_TMC_EPS_INT_DESC_HS \
+	.ep_interrupt_in.wMaxPacketSize    = LE16(UDI_TMC_EPS_SIZE_INT_HS),\
+	.ep_interrupt_out.wMaxPacketSize   = LE16(UDI_TMC_EPS_SIZE_INT_HS),
 
 #else
-# define UDI_VENDOR_EPS_INT_DESC
-# define UDI_VENDOR_EPS_INT_DESC_FS
-# define UDI_VENDOR_EPS_INT_DESC_HS
+# define UDI_TMC_EPS_INT_DESC
+# define UDI_TMC_EPS_INT_DESC_FS
+# define UDI_TMC_EPS_INT_DESC_HS
 #endif
 
-#if UDI_VENDOR_EPS_SIZE_BULK_FS
-# define UDI_VENDOR_EPS_BULK_DESC \
+#if UDI_TMC_EPS_SIZE_BULK_FS
+# define UDI_TMC_EPS_BULK_DESC \
 	.ep_bulk_in.bLength                = sizeof(usb_ep_desc_t),\
 	.ep_bulk_in.bDescriptorType        = USB_DT_ENDPOINT,\
 	.ep_bulk_in.bEndpointAddress       = UDI_VENDOR_EP_BULK_IN,\
@@ -131,22 +131,22 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_vendor;
 	.ep_bulk_out.bmAttributes          = USB_EP_TYPE_BULK,\
 	.ep_bulk_out.bInterval             = 0,
 
-# define UDI_VENDOR_EPS_BULK_DESC_FS \
-	.ep_bulk_in.wMaxPacketSize         = LE16(UDI_VENDOR_EPS_SIZE_BULK_FS),\
-	.ep_bulk_out.wMaxPacketSize        = LE16(UDI_VENDOR_EPS_SIZE_BULK_FS),
+# define UDI_TMC_EPS_BULK_DESC_FS \
+	.ep_bulk_in.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_BULK_FS),\
+	.ep_bulk_out.wMaxPacketSize        = LE16(UDI_TMC_EPS_SIZE_BULK_FS),
 
-# define UDI_VENDOR_EPS_BULK_DESC_HS \
-	.ep_bulk_in.wMaxPacketSize         = LE16(UDI_VENDOR_EPS_SIZE_BULK_HS),\
-	.ep_bulk_out.wMaxPacketSize        = LE16(UDI_VENDOR_EPS_SIZE_BULK_HS),
+# define UDI_TMC_EPS_BULK_DESC_HS \
+	.ep_bulk_in.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_BULK_HS),\
+	.ep_bulk_out.wMaxPacketSize        = LE16(UDI_TMC_EPS_SIZE_BULK_HS),
 
 #else
-# define UDI_VENDOR_EPS_BULK_DESC
-# define UDI_VENDOR_EPS_BULK_DESC_FS
-# define UDI_VENDOR_EPS_BULK_DESC_HS
+# define UDI_TMC_EPS_BULK_DESC
+# define UDI_TMC_EPS_BULK_DESC_FS
+# define UDI_TMC_EPS_BULK_DESC_HS
 #endif
 
-#if UDI_VENDOR_EPS_SIZE_ISO_FS
-# define UDI_VENDOR_EPS_ISO_DESC \
+#if UDI_TMC_EPS_SIZE_ISO_FS
+# define UDI_TMC_EPS_ISO_DESC \
 	.ep_iso_in.bLength                 = sizeof(usb_ep_desc_t),\
 	.ep_iso_in.bDescriptorType         = USB_DT_ENDPOINT,\
 	.ep_iso_in.bEndpointAddress        = UDI_VENDOR_EP_ISO_IN,\
@@ -158,18 +158,18 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_vendor;
 	.ep_iso_out.bmAttributes           = USB_EP_TYPE_ISOCHRONOUS,\
 	.ep_iso_out.bInterval              = 1,
 
-# define UDI_VENDOR_EPS_ISO_DESC_FS \
-	.ep_iso_in.wMaxPacketSize          = LE16(UDI_VENDOR_EPS_SIZE_ISO_FS),\
-	.ep_iso_out.wMaxPacketSize         = LE16(UDI_VENDOR_EPS_SIZE_ISO_FS),
+# define UDI_TMC_EPS_ISO_DESC_FS \
+	.ep_iso_in.wMaxPacketSize          = LE16(UDI_TMC_EPS_SIZE_ISO_FS),\
+	.ep_iso_out.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_ISO_FS),
 
-# define UDI_VENDOR_EPS_ISO_DESC_HS \
-	.ep_iso_in.wMaxPacketSize          = LE16(UDI_VENDOR_EPS_SIZE_ISO_HS),\
-	.ep_iso_out.wMaxPacketSize         = LE16(UDI_VENDOR_EPS_SIZE_ISO_HS),
+# define UDI_TMC_EPS_ISO_DESC_HS \
+	.ep_iso_in.wMaxPacketSize          = LE16(UDI_TMC_EPS_SIZE_ISO_HS),\
+	.ep_iso_out.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_ISO_HS),
 
 #else
-# define UDI_VENDOR_EPS_ISO_DESC
-# define UDI_VENDOR_EPS_ISO_DESC_FS
-# define UDI_VENDOR_EPS_ISO_DESC_HS
+# define UDI_TMC_EPS_ISO_DESC
+# define UDI_TMC_EPS_ISO_DESC_FS
+# define UDI_TMC_EPS_ISO_DESC_HS
 #endif
 
  /** Interface descriptor structure for vendor Class interface. */
@@ -178,19 +178,19 @@ typedef struct {
 	usb_iface_desc_t iface0;
 	/** Standard USB interface descriptor structure */
 	usb_iface_desc_t iface1;
-#if UDI_VENDOR_EPS_SIZE_INT_FS
+#if UDI_TMC_EPS_SIZE_INT_FS
 	/** Standard USB endpoint descriptor structure */
 	usb_ep_desc_t ep_interrupt_in;
 	/** Standard USB endpoint descriptor structure */
 	usb_ep_desc_t ep_interrupt_out;
 #endif
-#if UDI_VENDOR_EPS_SIZE_BULK_FS
+#if UDI_TMC_EPS_SIZE_BULK_FS
 	/** Standard USB endpoint descriptor structure */
 	usb_ep_desc_t ep_bulk_in;
 	/** Standard USB endpoint descriptor structure */
 	usb_ep_desc_t ep_bulk_out;
 #endif
-#if UDI_VENDOR_EPS_SIZE_ISO_FS
+#if UDI_TMC_EPS_SIZE_ISO_FS
 	/** Standard USB endpoint descriptor structure */
 	usb_ep_desc_t ep_iso_in;
 	/** Standard USB endpoint descriptor structure */
@@ -199,19 +199,19 @@ typedef struct {
 } udi_vendor_desc_t;
 
  /** By default no string is associated to this interface. */
-#ifndef UDI_VENDOR_STRING_ID
-#define UDI_VENDOR_STRING_ID     0
+#ifndef UDI_TMC_STRING_ID
+#define UDI_TMC_STRING_ID     0
 #endif
 
  /** Maximum six endpoints used by vendor interface. */
-#define UDI_VENDOR_EP_NB_INT  ((UDI_VENDOR_EPS_SIZE_INT_FS)?2:0)
-#define UDI_VENDOR_EP_NB_BULK ((UDI_VENDOR_EPS_SIZE_BULK_FS)?2:0)
-#define UDI_VENDOR_EP_NB_ISO  ((UDI_VENDOR_EPS_SIZE_ISO_FS)?2:0)
-#define UDI_VENDOR_EP_NB      (UDI_VENDOR_EP_NB_INT+UDI_VENDOR_EP_NB_BULK+UDI_VENDOR_EP_NB_ISO)
+#define UDI_TMC_EP_NB_INT  ((UDI_TMC_EPS_SIZE_INT_FS)?2:0)
+#define UDI_TMC_EP_NB_BULK ((UDI_TMC_EPS_SIZE_BULK_FS)?2:0)
+#define UDI_TMC_EP_NB_ISO  ((UDI_TMC_EPS_SIZE_ISO_FS)?2:0)
+#define UDI_TMC_EP_NB      (UDI_TMC_EP_NB_INT+UDI_TMC_EP_NB_BULK+UDI_TMC_EP_NB_ISO)
 
 
  /** Content of vendor interface descriptor for all speeds. */
-#define UDI_VENDOR_DESC      \
+#define UDI_TMC_DESC      \
 	.iface0.bLength            = sizeof(usb_iface_desc_t),\
 	.iface0.bDescriptorType    = USB_DT_INTERFACE,\
 	.iface0.bInterfaceNumber   = UDI_VENDOR_IFACE_NUMBER,\
@@ -220,34 +220,34 @@ typedef struct {
 	.iface0.bInterfaceClass    = VENDOR_CLASS,\
 	.iface0.bInterfaceSubClass = VENDOR_SUBCLASS,\
 	.iface0.bInterfaceProtocol = VENDOR_PROTOCOL,\
-	.iface0.iInterface         = UDI_VENDOR_STRING_ID,\
+	.iface0.iInterface         = UDI_TMC_STRING_ID,\
 	.iface1.bLength            = sizeof(usb_iface_desc_t),\
 	.iface1.bDescriptorType    = USB_DT_INTERFACE,\
 	.iface1.bInterfaceNumber   = UDI_VENDOR_IFACE_NUMBER,\
 	.iface1.bAlternateSetting  = 1,\
-	.iface1.bNumEndpoints      = UDI_VENDOR_EP_NB,\
+	.iface1.bNumEndpoints      = UDI_TMC_EP_NB,\
 	.iface1.bInterfaceClass    = VENDOR_CLASS,\
 	.iface1.bInterfaceSubClass = VENDOR_SUBCLASS,\
 	.iface1.bInterfaceProtocol = VENDOR_PROTOCOL,\
-	.iface1.iInterface         = UDI_VENDOR_STRING_ID,\
-	UDI_VENDOR_EPS_INT_DESC \
-	UDI_VENDOR_EPS_BULK_DESC \
-	UDI_VENDOR_EPS_ISO_DESC \
+	.iface1.iInterface         = UDI_TMC_STRING_ID,\
+	UDI_TMC_EPS_INT_DESC \
+	UDI_TMC_EPS_BULK_DESC \
+	UDI_TMC_EPS_ISO_DESC \
 
  /** Content of vendor interface descriptor for full speed only. */
-#define UDI_VENDOR_DESC_FS {\
-	UDI_VENDOR_DESC \
-	UDI_VENDOR_EPS_INT_DESC_FS \
-	UDI_VENDOR_EPS_BULK_DESC_FS \
-	UDI_VENDOR_EPS_ISO_DESC_FS \
+#define UDI_TMC_DESC_FS {\
+	UDI_TMC_DESC \
+	UDI_TMC_EPS_INT_DESC_FS \
+	UDI_TMC_EPS_BULK_DESC_FS \
+	UDI_TMC_EPS_ISO_DESC_FS \
    }
 
  /** Content of vendor interface descriptor for high speed only. */
-#define UDI_VENDOR_DESC_HS   {\
-	UDI_VENDOR_DESC \
-	UDI_VENDOR_EPS_INT_DESC_HS \
-	UDI_VENDOR_EPS_BULK_DESC_HS \
-	UDI_VENDOR_EPS_ISO_DESC_HS \
+#define UDI_TMC_DESC_HS   {\
+	UDI_TMC_DESC \
+	UDI_TMC_EPS_INT_DESC_HS \
+	UDI_TMC_EPS_BULK_DESC_HS \
+	UDI_TMC_EPS_ISO_DESC_HS \
    }
 /**@}*/
 
@@ -262,7 +262,7 @@ typedef struct {
  * @{
  */
 
- #if UDI_VENDOR_EPS_SIZE_INT_FS || defined(__DOXYGEN__)
+ #if UDI_TMC_EPS_SIZE_INT_FS || defined(__DOXYGEN__)
 /**
  * \brief Start a transfer on interrupt IN
  *
@@ -276,7 +276,7 @@ typedef struct {
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_vendor_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback);
 
 /**
@@ -292,11 +292,11 @@ bool udi_vendor_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_vendor_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback);
 #endif
 
-#if UDI_VENDOR_EPS_SIZE_BULK_FS || defined(__DOXYGEN__)
+#if UDI_TMC_EPS_SIZE_BULK_FS || defined(__DOXYGEN__)
 /**
  * \brief Start a transfer on bulk IN
  *
@@ -310,7 +310,7 @@ bool udi_vendor_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_vendor_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback);
 
 /**
@@ -326,12 +326,12 @@ bool udi_vendor_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_vendor_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback);
 #endif
 
 
-#if UDI_VENDOR_EPS_SIZE_ISO_FS || defined(__DOXYGEN__)
+#if UDI_TMC_EPS_SIZE_ISO_FS || defined(__DOXYGEN__)
 /**
  * \brief Start a transfer on isochronous IN
  *
@@ -345,7 +345,7 @@ bool udi_vendor_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_vendor_iso_in_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_iso_in_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback);
 
 /**
@@ -361,7 +361,7 @@ bool udi_vendor_iso_in_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_iso_out_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback);
 #endif
 
@@ -403,12 +403,12 @@ bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
 	 * #define  UDI_VENDOR_SETUP_IN_RECEIVED()   my_vendor_setup_in_received()
 	 * extern bool my_vendor_setup_in_received(void);
 	 *
-	 * #define  UDI_VENDOR_EPS_SIZE_INT_FS    64
-	 * #define  UDI_VENDOR_EPS_SIZE_BULK_FS   64
-	 * #define  UDI_VENDOR_EPS_SIZE_ISO_FS   256
-	 * #define  UDI_VENDOR_EPS_SIZE_INT_HS    64
-	 * #define  UDI_VENDOR_EPS_SIZE_BULK_HS  512
-	 * #define  UDI_VENDOR_EPS_SIZE_ISO_HS    64
+	 * #define  UDI_TMC_EPS_SIZE_INT_FS    64
+	 * #define  UDI_TMC_EPS_SIZE_BULK_FS   64
+	 * #define  UDI_TMC_EPS_SIZE_ISO_FS   256
+	 * #define  UDI_TMC_EPS_SIZE_INT_HS    64
+	 * #define  UDI_TMC_EPS_SIZE_BULK_HS  512
+	 * #define  UDI_TMC_EPS_SIZE_ISO_HS    64
 
 	 * #include "udi_vendor_conf.h" // At the end of conf_usb.h file
  \endcode
@@ -431,12 +431,12 @@ bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
 	 {
 	    if (my_flag_autorize_vendor_transfert) {
 	      // Enable a transfer on OUT interrupt endpoint
-	      udi_vendor_interrupt_out_run(
+	      udi_tmc_interrupt_out_run(
 	      		global_buffer,
 	      		sizeof(global_buffer),
 	      		NULL);
 	      // Enable a transfer on IN interrupt endpoint
-	      udi_vendor_interrupt_in_run(
+	      udi_tmc_interrupt_in_run(
 	      		global_buffer,
 	      		sizeof(global_buffer),
 	      		NULL);
@@ -476,12 +476,12 @@ bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
  *       through these both callbacks.
  *
  * \code
- #define  UDI_VENDOR_EPS_SIZE_INT_FS    64
- #define  UDI_VENDOR_EPS_SIZE_BULK_FS   64
- #define  UDI_VENDOR_EPS_SIZE_ISO_FS   256
- #define  UDI_VENDOR_EPS_SIZE_INT_HS    64
- #define  UDI_VENDOR_EPS_SIZE_BULK_HS  512
- #define  UDI_VENDOR_EPS_SIZE_ISO_HS    64
+ #define  UDI_TMC_EPS_SIZE_INT_FS    64
+ #define  UDI_TMC_EPS_SIZE_BULK_FS   64
+ #define  UDI_TMC_EPS_SIZE_ISO_FS   256
+ #define  UDI_TMC_EPS_SIZE_INT_HS    64
+ #define  UDI_TMC_EPS_SIZE_BULK_HS  512
+ #define  UDI_TMC_EPS_SIZE_ISO_HS    64
  \endcode
  * \note The endpoint size is defined by the final application, and can be
  *       disabled if the full speed size is zero.
@@ -490,17 +490,17 @@ bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
  * done through these functions:
  * \code
  // Start a transfer on interrupt IN
- udi_vendor_interrupt_in_run();
+ udi_tmc_interrupt_in_run();
  // Start a transfer on interrupt OUT
- udi_vendor_interrupt_out_run();
+ udi_tmc_interrupt_out_run();
  // Start a transfer on bulk IN
- udi_vendor_bulk_in_run();
+ udi_tmc_bulk_in_run();
  // Start a transfer on bulk OUT
- udi_vendor_bulk_out_run();
+ udi_tmc_bulk_out_run();
  // Start a transfer on isochronous IN
- udi_vendor_iso_in_run();
+ udi_tmc_iso_in_run();
  // Start a transfer on isochronous OUT
- udi_vendor_iso_out_run();
+ udi_tmc_iso_out_run();
  \endcode
  *
  * \section udi_vendor_use_cases Advanced Use Cases
@@ -558,10 +558,10 @@ bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
     udi_vendor_desc_t udi_vendor; \
     ...
  #define UDI_COMPOSITE_DESC_FS \
-    .udi_vendor = UDI_VENDOR_DESC, \
+    .udi_vendor = UDI_TMC_DESC, \
     ...
  #define UDI_COMPOSITE_DESC_HS \
-    .udi_vendor = UDI_VENDOR_DESC, \
+    .udi_vendor = UDI_TMC_DESC, \
     ...
  #define UDI_COMPOSITE_API \
     &udi_api_vendor, \
@@ -610,12 +610,12 @@ bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
  // USB Interfaces descriptor value for Full Speed
  #define UDI_COMPOSITE_DESC_FS \
     ...
-    .udi_vendor = UDI_VENDOR_DESC_FS, \
+    .udi_vendor = UDI_TMC_DESC_FS, \
     ...
  // USB Interfaces descriptor value for High Speed
  #define UDI_COMPOSITE_DESC_HS \
     ...
-    .udi_vendor = UDI_VENDOR_DESC_HS, \
+    .udi_vendor = UDI_TMC_DESC_HS, \
     ...
  // USB Interface APIs
  #define UDI_COMPOSITE_API \

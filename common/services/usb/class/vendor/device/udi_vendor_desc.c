@@ -131,7 +131,7 @@ UDC_DESC_STORAGE udc_desc_t udc_desc_fs = {
 	.conf.iConfiguration       = 0,
 	.conf.bmAttributes         = USB_CONFIG_ATTR_MUST_SET | USB_DEVICE_ATTR,
 	.conf.bMaxPower            = USB_CONFIG_MAX_POWER(USB_DEVICE_POWER),
-	.udi_vendor                = UDI_VENDOR_DESC_FS,
+	.udi_vendor                = UDI_TMC_DESC_FS,
 };
 
 #ifdef USB_DEVICE_HS_SUPPORT
@@ -146,7 +146,7 @@ UDC_DESC_STORAGE udc_desc_t udc_desc_hs = {
 	.conf.iConfiguration       = 0,
 	.conf.bmAttributes         = USB_CONFIG_ATTR_MUST_SET | USB_DEVICE_ATTR,
 	.conf.bMaxPower            = USB_CONFIG_MAX_POWER(USB_DEVICE_POWER),
-	.udi_vendor                = UDI_VENDOR_DESC_HS,
+	.udi_vendor                = UDI_TMC_DESC_HS,
 };
 #endif
 
