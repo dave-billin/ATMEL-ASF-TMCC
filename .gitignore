@@ -1,0 +1,12 @@
+.project
+.cproject
+*.swp
+*.bin
+*.elf
+*.hex
+*.lss
+*.map
+*.sym
+.settings
+*.d
+*.o
