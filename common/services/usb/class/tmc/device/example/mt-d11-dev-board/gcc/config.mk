@@ -43,36 +43,36 @@ PRJ_PATH = ../../../../../../../../..
 ARCH = cortex-m0plus
 
 # Target part: none, sam3n4 or sam4l4aa
-PART = samd21j18a
+PART = samd11d14am
 
 # Application target name. Given with suffix .a for library and .elf for a
 # standalone application.
-TARGET_FLASH = device_example_flash.elf
-TARGET_SRAM = device_example_sram.elf
+TARGET_FLASH = tmcc_mtd11_flash.elf
+TARGET_SRAM = tmcc_mtd11_sram.elf
 
 # List of C source files.
 CSRCS = \
        common/services/sleepmgr/samd/sleepmgr.c           \
-       common/services/usb/class/vendor/device/example/main.c \
-       common/services/usb/class/vendor/device/example/samd21j18a_samd21_xplained_pro/ui.c \
-       common/services/usb/class/vendor/device/udi_vendor.c \
-       common/services/usb/class/vendor/device/udi_vendor_desc.c \
+       common/services/usb/class/tmc/device/example/main.c \
+       common/services/usb/class/tmc/device/example/mt-d11-dev-board/ui.c \
+       common/services/usb/class/tmc/device/udi_tmc.c \
+       common/services/usb/class/tmc/device/udi_tmc_desc.c \
        common/services/usb/udc/udc.c                      \
        common/utils/interrupt/interrupt_sam_nvic.c        \
-       sam0/boards/samd21_xplained_pro/board_init.c       \
+       sam0/boards/samd11_xplained_pro/board_init.c       \
        sam0/drivers/extint/extint_callback.c              \
        sam0/drivers/extint/extint_sam_d_r_h/extint.c      \
        sam0/drivers/port/port.c                           \
-       sam0/drivers/system/clock/clock_samd21_r21_da_ha1/clock.c \
-       sam0/drivers/system/clock/clock_samd21_r21_da_ha1/gclk.c \
+       sam0/drivers/system/clock/clock_samd09_d10_d11/clock.c \
+       sam0/drivers/system/clock/clock_samd09_d10_d11/gclk.c \
        sam0/drivers/system/interrupt/system_interrupt.c   \
        sam0/drivers/system/pinmux/pinmux.c                \
        sam0/drivers/system/system.c                       \
        sam0/drivers/usb/stack_interface/usb_device_udd.c  \
        sam0/drivers/usb/stack_interface/usb_dual.c        \
        sam0/drivers/usb/usb_sam_d_r/usb.c                 \
-       sam0/utils/cmsis/samd21/source/gcc/startup_samd21.c \
-       sam0/utils/cmsis/samd21/source/system_samd21.c     \
+       sam0/utils/cmsis/samd11/source/gcc/startup_samd11.c \
+       sam0/utils/cmsis/samd11/source/system_samd11.c     \
        sam0/utils/syscalls/gcc/syscalls.c
 
 # List of assembler source files.
@@ -83,22 +83,22 @@ INC_PATH = \
        common/boards                                      \
        common/services/sleepmgr                           \
        common/services/usb                                \
-       common/services/usb/class/vendor                   \
-       common/services/usb/class/vendor/device            \
-       common/services/usb/class/vendor/device/example    \
-       common/services/usb/class/vendor/device/example/samd21j18a_samd21_xplained_pro \
+       common/services/usb/class/tmc                   \
+       common/services/usb/class/tmc/device            \
+       common/services/usb/class/tmc/device/example    \
+       common/services/usb/class/tmc/device/example/mt-d11-dev-board \
        common/services/usb/udc                            \
        common/utils                                       \
        sam0/boards                                        \
-       sam0/boards/samd21_xplained_pro                    \
+       sam0/boards/samd11_xplained_pro                    \
        sam0/drivers/extint                                \
        sam0/drivers/extint/extint_sam_d_r_h               \
        sam0/drivers/port                                  \
        sam0/drivers/system                                \
        sam0/drivers/system/clock                          \
-       sam0/drivers/system/clock/clock_samd21_r21_da_ha1  \
+       sam0/drivers/system/clock/clock_samd09_d10_d11     \
        sam0/drivers/system/interrupt                      \
-       sam0/drivers/system/interrupt/system_interrupt_samd21 \
+       sam0/drivers/system/interrupt/system_interrupt_samd10_d11 \
        sam0/drivers/system/pinmux                         \
        sam0/drivers/system/power                          \
        sam0/drivers/system/power/power_sam_d_r_h          \
@@ -108,13 +108,13 @@ INC_PATH = \
        sam0/drivers/usb/stack_interface                   \
        sam0/drivers/usb/usb_sam_d_r                       \
        sam0/utils                                         \
-       sam0/utils/cmsis/samd21/include                    \
-       sam0/utils/cmsis/samd21/source                     \
+       sam0/utils/cmsis/samd11/include                    \
+       sam0/utils/cmsis/samd11/source                     \
        sam0/utils/header_files                            \
        sam0/utils/preprocessor                            \
        thirdparty/CMSIS/Include                           \
        thirdparty/CMSIS/Lib/GCC \
-       common/services/usb/class/vendor/device/example/samd21j18a_samd21_xplained_pro/gcc
+       common/services/usb/class/tmc/device/example/mt-d11-dev-board/gcc
 
 # Additional search paths for libraries.
 LIB_PATH =  \
@@ -125,12 +125,12 @@ LIBS =  \
        arm_cortexM0l_math                                
 
 # Path relative to top level directory pointing to a linker script.
-LINKER_SCRIPT_FLASH = sam0/utils/linker_scripts/samd21/gcc/samd21j18a_flash.ld
-LINKER_SCRIPT_SRAM  = sam0/utils/linker_scripts/samd21/gcc/samd21j18a_sram.ld
+LINKER_SCRIPT_FLASH = sam0/utils/linker_scripts/samd11/gcc/samd11d14am_flash.ld
+LINKER_SCRIPT_SRAM  = sam0/utils/linker_scripts/samd11/gcc/samd11d14am_sram.ld
 
 # Path relative to top level directory pointing to a linker script.
-DEBUG_SCRIPT_FLASH = sam0/boards/samd21_xplained_pro/debug_scripts/gcc/samd21_xplained_pro_flash.gdb
-DEBUG_SCRIPT_SRAM  = sam0/boards/samd21_xplained_pro/debug_scripts/gcc/samd21_xplained_pro_sram.gdb
+DEBUG_SCRIPT_FLASH = sam0/boards/samd11_xplained_pro/debug_scripts/gcc/samd11_xplained_pro_flash.gdb
+DEBUG_SCRIPT_SRAM  = sam0/boards/samd11_xplained_pro/debug_scripts/gcc/samd11_xplained_pro_sram.gdb
 
 # Project type parameter: all, sram or flash
 PROJECT_TYPE        = flash
@@ -163,14 +163,17 @@ CFLAGS =
 #   EXT_BOARD  Optional extension board in use, see boards/board.h for a list.
 CPPFLAGS = \
        -D ARM_MATH_CM0PLUS=true                           \
-       -D BOARD=SAMD21_XPLAINED_PRO                       \
+       -D BOARD=SAMD11_XPLAINED_PRO                       \
        -D EXTINT_CALLBACK_MODE=true                       \
        -D UDD_ENABLE                                      \
        -D USB_DEVICE_LPM_SUPPORT                          \
-       -D __SAMD21J18A__
+       -D __SAMD11D14AM__
 
 # Extra flags to use when linking
 LDFLAGS = \
+                                                          \
+       -Wl,--defsym,STACK_SIZE=0x4CC                      \
+       -Wl,--defsym,__stack_size__=0x4CC
 
 # Pre- and post-build commands
 PREBUILD_CMD = 

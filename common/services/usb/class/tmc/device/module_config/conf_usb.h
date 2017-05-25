@@ -120,19 +120,19 @@
  * @{
  */
 //! Interface callback definition
-#define UDI_VENDOR_ENABLE_EXT()          true
-#define UDI_VENDOR_DISABLE_EXT()
-#define UDI_VENDOR_SETUP_OUT_RECEIVED()  false
-#define UDI_VENDOR_SETUP_IN_RECEIVED()   false
+#define UDI_TMC_ENABLE_EXT()          true
+#define UDI_TMC_DISABLE_EXT()
+#define UDI_TMC_SETUP_OUT_RECEIVED()  false
+#define UDI_TMC_SETUP_IN_RECEIVED()   false
 /*
- * #define UDI_VENDOR_ENABLE_EXT() my_callback_vendor_enable()
+ * #define UDI_TMC_ENABLE_EXT() my_callback_vendor_enable()
  * extern bool my_callback_vendor_enable(void);
- * #define UDI_VENDOR_DISABLE_EXT() my_callback_vendor_disable()
+ * #define UDI_TMC_DISABLE_EXT() my_callback_vendor_disable()
  * extern void my_callback_vendor_disable(void);
  *
- * #define  UDI_VENDOR_SETUP_OUT_RECEIVED()  my_vendor_setup_out_received()
+ * #define  UDI_TMC_SETUP_OUT_RECEIVED()  my_vendor_setup_out_received()
  * extern bool my_vendor_setup_out_received(void);
- * #define  UDI_VENDOR_SETUP_IN_RECEIVED()   my_vendor_setup_in_received()
+ * #define  UDI_TMC_SETUP_IN_RECEIVED()   my_vendor_setup_in_received()
  * extern bool my_vendor_setup_in_received(void);
  */
 
@@ -164,6 +164,6 @@
 
 //! The includes of classes and other headers must be done
 //! at the end of this file to avoid compile error
-#include "udi_vendor_conf.h"
+#include "udi_tmc_conf.h"
 
 #endif // _CONF_USB_H_

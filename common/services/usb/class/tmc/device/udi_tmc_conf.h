@@ -37,7 +37,7 @@
 //! Control endpoint size
 #define  USB_DEVICE_EP_CTRL_SIZE       64
 
-//! Endpoint numbers used by vendor interface.
+//! Endpoint numbers used by TMC interface.
 //! Note: The order of endpoint can depend on USB hardware capability
 //! when a specific mapping is used on USB DPRAM.
 #if SAM3S || SAM4S || SAM4E
@@ -88,7 +88,7 @@
  * \name UDD Configuration
  */
 //@{
-//! Maximum 6 endpoints used by vendor interface
+//! Maximum 6 endpoints used by TMC interface
 #define UDI_TMC_EP_NB_INT  ((UDI_TMC_EPS_SIZE_INT_FS)?2:0)
 #define UDI_TMC_EP_NB_BULK ((UDI_TMC_EPS_SIZE_BULK_FS)?2:0)
 #define UDI_TMC_EP_NB_ISO  ((UDI_TMC_EPS_SIZE_ISO_FS)?2:0)

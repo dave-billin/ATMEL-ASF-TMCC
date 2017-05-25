@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief Main functions for USB Device vendor example
+ * \brief Main functions for USB Device TMC example
  *
  * Copyright (c) 2011-2015 Atmel Corporation. All rights reserved.
  *
@@ -48,7 +48,7 @@
 #include "conf_usb.h"
 #include "ui.h"
 
-static volatile bool main_b_vendor_enable = false;
+static volatile bool main_b_tmc_enable = false;
 
 /**
  * \name Buffer for loopback
@@ -71,17 +71,17 @@ static uint8_t main_buf_iso_sel;
 # endif
 #endif
 
-void main_vendor_int_in_received(udd_ep_status_t status,
+void main_tmc_int_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_vendor_int_out_received(udd_ep_status_t status,
+void main_tmc_int_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_vendor_bulk_in_received(udd_ep_status_t status,
+void main_tmc_bulk_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_vendor_bulk_out_received(udd_ep_status_t status,
+void main_tmc_bulk_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_vendor_iso_in_received(udd_ep_status_t status,
+void main_tmc_iso_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_vendor_iso_out_received(udd_ep_status_t status,
+void main_tmc_iso_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
 
 /*! \brief Main function. Execution starts here.
@@ -123,31 +123,31 @@ void main_resume_action(void)
 
 void main_sof_action(void)
 {
-	if (!main_b_vendor_enable)
+	if (!main_b_tmc_enable)
 		return;
 	ui_process(udd_get_frame_number());
 }
 
-bool main_vendor_enable(void)
+bool main_tmc_enable(void)
 {
-	main_b_vendor_enable = true;
+	main_b_tmc_enable = true;
 	// Start data reception on OUT endpoints
 #if UDI_TMC_EPS_SIZE_INT_FS
-	main_vendor_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
+	main_tmc_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
 #if UDI_TMC_EPS_SIZE_BULK_FS
-	main_vendor_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
+	main_tmc_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
 #if UDI_TMC_EPS_SIZE_ISO_FS
 	main_buf_iso_sel=0;
-	main_vendor_iso_out_received(UDD_EP_TRANSFER_OK, 0, 0);
+	main_tmc_iso_out_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
 	return true;
 }
 
-void main_vendor_disable(void)
+void main_tmc_disable(void)
 {
-	main_b_vendor_enable = false;
+	main_b_tmc_enable = false;
 }
 
 bool main_setup_out_received(void)
@@ -171,7 +171,7 @@ bool main_setup_in_received(void)
 }
 
 #if UDI_TMC_EPS_SIZE_INT_FS
-void main_vendor_int_in_received(udd_ep_status_t status,
+void main_tmc_int_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(nb_transfered);
@@ -184,10 +184,10 @@ void main_vendor_int_in_received(udd_ep_status_t status,
 	udi_tmc_interrupt_out_run(
 			main_buf_loopback,
 			sizeof(main_buf_loopback),
-			main_vendor_int_out_received);
+			main_tmc_int_out_received);
 }
 
-void main_vendor_int_out_received(udd_ep_status_t status,
+void main_tmc_int_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(ep);
@@ -199,12 +199,12 @@ void main_vendor_int_out_received(udd_ep_status_t status,
 	udi_tmc_interrupt_in_run(
 			main_buf_loopback,
 			nb_transfered,
-			main_vendor_int_in_received);
+			main_tmc_int_in_received);
 }
 #endif
 
 #if UDI_TMC_EPS_SIZE_BULK_FS
-void main_vendor_bulk_in_received(udd_ep_status_t status,
+void main_tmc_bulk_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(nb_transfered);
@@ -217,10 +217,10 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 	udi_tmc_bulk_out_run(
 			main_buf_loopback,
 			sizeof(main_buf_loopback),
-			main_vendor_bulk_out_received);
+			main_tmc_bulk_out_received);
 }
 
-void main_vendor_bulk_out_received(udd_ep_status_t status,
+void main_tmc_bulk_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(ep);
@@ -232,12 +232,12 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	udi_tmc_bulk_in_run(
 			main_buf_loopback,
 			nb_transfered,
-			main_vendor_bulk_in_received);
+			main_tmc_bulk_in_received);
 }
 #endif
 
 #if UDI_TMC_EPS_SIZE_ISO_FS
-void main_vendor_iso_in_received(udd_ep_status_t status,
+void main_tmc_iso_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(status);
@@ -246,7 +246,7 @@ void main_vendor_iso_in_received(udd_ep_status_t status,
 	ui_loop_back_state(false);
 }
 
-void main_vendor_iso_out_received(udd_ep_status_t status,
+void main_tmc_iso_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	uint8_t *buf_ptr;
@@ -264,7 +264,7 @@ void main_vendor_iso_out_received(udd_ep_status_t status,
 		udi_tmc_iso_in_run(
 				buf_ptr,
 				nb_transfered,
-				main_vendor_iso_in_received);
+				main_tmc_iso_in_received);
 	}
 
 	// Switch of buffer
@@ -289,15 +289,15 @@ void main_vendor_iso_out_received(udd_ep_status_t status,
 			buf_ptr,
 			udd_is_high_speed()?
 				UDI_TMC_EPS_SIZE_ISO_HS:UDI_TMC_EPS_SIZE_ISO_FS,
-			main_vendor_iso_out_received);
+			main_tmc_iso_out_received);
 }
 #endif
 
 /**
- * \mainpage ASF USB Device Vendor Example
+ * \mainpage ASF USB Device TMC Example
  *
  * \section intro Introduction
- * This example shows how to implement a USB Device implementing Vendor Class
+ * This example shows how to implement a USB Device implementing TMC Class
  * on Atmel MCU with USB module.
  *
  * \section startup Startup

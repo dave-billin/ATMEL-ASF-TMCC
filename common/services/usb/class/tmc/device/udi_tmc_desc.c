@@ -48,11 +48,11 @@
 #include "conf_usb.h"
 #include "udd.h"
 #include "udc_desc.h"
-#include "udi_vendor.h"
+#include "udi_tmc.h"
 
 
 /**
- * \defgroup udi_vendor_group_single_desc USB device descriptors for a single interface
+ * \defgroup udi_tmc_group_single_desc USB device descriptors for a single interface
  *
  * The following structures provide the USB device descriptors required for
  * USB Device with a single interface Vendor Class.
@@ -76,8 +76,7 @@ UDC_DESC_STORAGE usb_dev_desc_t udc_device_desc = {
 	.bMaxPacketSize0           = USB_DEVICE_EP_CTRL_SIZE,
 	.idVendor                  = LE16(USB_DEVICE_VENDOR_ID),
 	.idProduct                 = LE16(USB_DEVICE_PRODUCT_ID),
-	.bcdDevice                 = LE16((USB_DEVICE_MAJOR_VERSION << 8)
-		| USB_DEVICE_MINOR_VERSION),
+	.bcdDevice                 = LE16( (USB_DEVICE_MAJOR_VERSION << 8) | USB_DEVICE_MINOR_VERSION),
 #ifdef USB_DEVICE_MANUFACTURE_NAME
 	.iManufacturer             = 1,
 #else
@@ -116,7 +115,7 @@ UDC_DESC_STORAGE usb_dev_qual_desc_t udc_device_qual = {
 COMPILER_PACK_SET(1)
 typedef struct {
 	usb_conf_desc_t conf;
-	udi_vendor_desc_t udi_vendor;
+	udi_tmc_desc_t udi_vendor;
 } udc_desc_t;
 COMPILER_PACK_RESET()
 
@@ -158,7 +157,7 @@ UDC_DESC_STORAGE udc_desc_t udc_desc_hs = {
 
 //! Associate an UDI for each USB interface
 UDC_DESC_STORAGE udi_api_t *udi_apis[USB_DEVICE_NB_INTERFACE] = {
-	&udi_api_vendor,
+	&udi_api_tmc,
 };
 
 //! Add UDI with USB Descriptors FS

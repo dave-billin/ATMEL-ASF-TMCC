@@ -48,16 +48,16 @@
 #define _MAIN_H_
 
 /*! \brief Notify via user interface that enumeration is ok
- * This is called by vendor interface when USB Host enable it.
+ * This is called by TMC interface when USB Host enable it.
  *
- * \retval true if vendor startup is successfully done
+ * \retval true if TMC startup is successfully done
  */
-bool main_vendor_enable(void);
+bool main_tmc_enable(void);
 
 /*! \brief Notify via user interface that enumeration is disabled
- * This is called by vendor interface when USB Host disable it.
+ * This is called by TMC interface when USB Host disable it.
  */
-void main_vendor_disable(void);
+void main_tmc_disable(void);
 
 /*! \brief Manages the leds behaviors
  * Called when a start of frame is received on USB line each 1ms.

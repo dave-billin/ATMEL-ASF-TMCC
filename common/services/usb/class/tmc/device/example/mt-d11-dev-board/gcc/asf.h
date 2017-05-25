@@ -106,9 +106,9 @@
 #include <udd.h>
 
 // From module: USB Device Vendor Class (Single Interface Device)
-#include <udi_vendor.h>
+#include <udi_tmc.h>
 
 // From module: USB Vendor Protocol
-#include <usb_protocol_vendor.h>
+#include <usb_protocol_tmc.h>
 
 #endif // ASF_H

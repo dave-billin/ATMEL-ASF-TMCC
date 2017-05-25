@@ -57,7 +57,7 @@
 
 //! Device definition (mandatory)
 #define  USB_DEVICE_VENDOR_ID             USB_VID_ATMEL
-#define  USB_DEVICE_PRODUCT_ID            USB_PID_ATMEL_ASF_VENDOR_CLASS
+#define  USB_DEVICE_PRODUCT_ID            0x1234
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
 #define  USB_DEVICE_POWER                 100 // Consumption on Vbus line (mA)
@@ -69,12 +69,12 @@
 
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "ATMEL ASF"
-#define  USB_DEVICE_PRODUCT_NAME          "Vendor Class Example"
+#define  USB_DEVICE_PRODUCT_NAME          "TMC Class Example"
 // #define  USB_DEVICE_SERIAL_NAME           "123123123123"
 
 /**
  * Device speeds support
- * Low speed not supported by this vendor class
+ * Low speed not supported by this TMC class
  * @{
  */
 //! To authorize the High speed
@@ -113,14 +113,14 @@
  */
 
 /**
- * Configuration of vendor interface
+ * Configuration of TMC interface
  * @{
  */
 //! Interface callback definition
-#define UDI_VENDOR_ENABLE_EXT()           main_vendor_enable()
-#define UDI_VENDOR_DISABLE_EXT()          main_vendor_disable()
-#define UDI_VENDOR_SETUP_OUT_RECEIVED()   main_setup_out_received()
-#define UDI_VENDOR_SETUP_IN_RECEIVED()    main_setup_in_received()
+#define UDI_TMC_ENABLE_EXT()           main_tmc_enable()
+#define UDI_TMC_DISABLE_EXT()          main_tmc_disable()
+#define UDI_TMC_SETUP_OUT_RECEIVED()   main_setup_out_received()
+#define UDI_TMC_SETUP_IN_RECEIVED()    main_setup_in_received()
 
 //! endpoints size for full speed
 //! Note: Disable the endpoints of a type, if size equal 0
@@ -153,7 +153,7 @@
 
 //! The includes of classes and other headers must be done
 //! at the end of this file to avoid compile error
-#include "udi_vendor_conf.h"
+#include "udi_tmc_conf.h"
 #include "ui.h"
 #include "main.h"
 
