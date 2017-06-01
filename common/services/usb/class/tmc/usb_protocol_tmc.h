@@ -58,9 +58,9 @@
  * \name Vendor class values
  */
 //@{
-#define  TMC_CLASS                  0xFF
-#define  TMC_SUBCLASS               0xFF
-#define  TMC_PROTOCOL               0xFF
+#define  TMC_CLASS                  0x00
+#define  TMC_SUBCLASS               0x00
+#define  TMC_PROTOCOL               0x00
 //@}
 
 

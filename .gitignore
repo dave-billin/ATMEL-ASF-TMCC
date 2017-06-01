@@ -7,6 +7,6 @@
 *.lss
 *.map
 *.sym
-.settings
+**.settings
 *.d
 *.o

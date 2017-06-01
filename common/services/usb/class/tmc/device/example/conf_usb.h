@@ -69,7 +69,7 @@
 
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "ATMEL ASF"
-#define  USB_DEVICE_PRODUCT_NAME          "TMC Class Example"
+#define  USB_DEVICE_PRODUCT_NAME          "TMCC Example"
 // #define  USB_DEVICE_SERIAL_NAME           "123123123123"
 
 /**
