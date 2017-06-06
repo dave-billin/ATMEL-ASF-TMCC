@@ -104,6 +104,9 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
  * @{
  */
 #if UDI_TMC_EPS_SIZE_INT_FS
+
+#error Interrupt enpoints are not supported by this TMC implementation!
+
 # define UDI_TMC_EPS_INT_DESC \
    .ep_interrupt_in.bLength           = sizeof(usb_ep_desc_t),\
    .ep_interrupt_in.bDescriptorType   = USB_DT_ENDPOINT,\
@@ -158,6 +161,9 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
 #endif
 
 #if UDI_TMC_EPS_SIZE_ISO_FS
+
+#error Isochronous enpoints are not supported by the TMC class!
+
 # define UDI_TMC_EPS_ISO_DESC \
    .ep_iso_in.bLength                 = sizeof(usb_ep_desc_t),\
    .ep_iso_in.bDescriptorType         = USB_DT_ENDPOINT,\
@@ -222,20 +228,11 @@ typedef struct {
    .iface0.bDescriptorType    = USB_DT_INTERFACE,\
    .iface0.bInterfaceNumber   = UDI_TMC_IFACE_NUMBER,\
    .iface0.bAlternateSetting  = 0,\
-   .iface0.bNumEndpoints      = 0,\
+   .iface0.bNumEndpoints      = 2,\
    .iface0.bInterfaceClass    = TMC_CLASS,\
    .iface0.bInterfaceSubClass = TMC_SUBCLASS,\
    .iface0.bInterfaceProtocol = TMC_PROTOCOL,\
    .iface0.iInterface         = UDI_TMC_STRING_ID,\
-   .iface1.bLength            = sizeof(usb_iface_desc_t),\
-   .iface1.bDescriptorType    = USB_DT_INTERFACE,\
-   .iface1.bInterfaceNumber   = UDI_TMC_IFACE_NUMBER,\
-   .iface1.bAlternateSetting  = 1,\
-   .iface1.bNumEndpoints      = UDI_TMC_EP_NB,\
-   .iface1.bInterfaceClass    = TMC_CLASS,\
-   .iface1.bInterfaceSubClass = TMC_SUBCLASS,\
-   .iface1.bInterfaceProtocol = TMC_PROTOCOL,\
-   .iface1.iInterface         = UDI_TMC_STRING_ID,\
    UDI_TMC_EPS_INT_DESC \
    UDI_TMC_EPS_BULK_DESC \
    UDI_TMC_EPS_ISO_DESC \

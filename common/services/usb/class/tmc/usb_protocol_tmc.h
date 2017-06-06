@@ -58,8 +58,8 @@
  * \name Vendor class values
  */
 //@{
-#define  TMC_CLASS                  0x00
-#define  TMC_SUBCLASS               0x00
+#define  TMC_CLASS                  0xfe  // Application class code for USBTMC assigned by USB-IF
+#define  TMC_SUBCLASS               0x03  // Subclass code assigned by USB-IF
 #define  TMC_PROTOCOL               0x00
 //@}
 

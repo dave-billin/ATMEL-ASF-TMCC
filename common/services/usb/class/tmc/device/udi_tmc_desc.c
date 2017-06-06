@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief Default descriptors for a USB Device with a single vendor class
+ * \brief Default descriptors for a USB Device with a single TMC class
  * interface
  *
  * Copyright (c) 2011-2016 Atmel Corporation. All rights reserved.
@@ -52,7 +52,7 @@
 
 
 /**
- * \defgroup udi_tmc_group_single_desc USB device descriptors for a single interface
+ * \defgroup udi_tmc_group_single_desc USB device descriptors for a single TMC interface
  *
  * The following structures provide the USB device descriptors required for
  * USB Device with a single interface Vendor Class.

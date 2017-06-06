@@ -164,6 +164,7 @@ extern "C" {
 #define AVR_SIMULATOR_UC3          98  //!< Simulator for the AVR UC3 device family.
 #define USER_BOARD                 99  //!< User-reserved board (if any).
 #define DUMMY_BOARD               100  //!< Dummy board to support board-independent applications (e.g. bootloader).
+#define MATTAIRTECH_MTD11         200  //!< MattairTech MT-D11 development board
 //! @}
 
 /*! \name Extension Boards
@@ -387,6 +388,8 @@ extern "C" {
 #  include "user_board.h"
 #elif BOARD == DUMMY_BOARD
 #  include "dummy/dummy_board.h"
+#elif BOARD == MATTAIRTECH_MTD11
+#  include "mattairtech_mtd11/mattairtech_mtd11.h"
 #else
 #  error No known Atmel board defined
 #endif

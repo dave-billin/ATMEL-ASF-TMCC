@@ -75,6 +75,8 @@
  * @{
  */
 
+#error This file is for documentation purposes only.  Values in it should not be referenced by sources!
+
 /** Global structure which contains standard UDI interface for UDC. */
 extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
 /**@}*/
@@ -92,6 +94,7 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #if UDI_TMC_EPS_SIZE_INT_FS
+
 # define UDI_TMC_EPS_INT_DESC \
 	.ep_interrupt_in.bLength           = sizeof(usb_ep_desc_t),\
 	.ep_interrupt_in.bDescriptorType   = USB_DT_ENDPOINT,\
@@ -146,6 +149,9 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
 #endif
 
 #if UDI_TMC_EPS_SIZE_ISO_FS
+
+#error Isochronous enpoints are not supported by this implementation!
+
 # define UDI_TMC_EPS_ISO_DESC \
 	.ep_iso_in.bLength                 = sizeof(usb_ep_desc_t),\
 	.ep_iso_in.bDescriptorType         = USB_DT_ENDPOINT,\

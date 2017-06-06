@@ -114,6 +114,10 @@
 
 /**
  * Configuration of TMC interface
+ *
+ * @remarks
+ *    The USB TMC Class does not utilize isochronous endpoints.  A single
+ *    interrupt endpoint is optional, but is not enabled in this implementation
  * @{
  */
 //! Interface callback definition
@@ -124,18 +128,18 @@
 
 //! endpoints size for full speed
 //! Note: Disable the endpoints of a type, if size equal 0
-#define UDI_TMC_EPS_SIZE_INT_FS    64
-#define UDI_TMC_EPS_SIZE_BULK_FS   64
+#define UDI_TMC_EPS_SIZE_INT_FS    0      // This TMC class does not include an interrupt endpoint
+#define UDI_TMC_EPS_SIZE_BULK_FS   64     // Must be a multiple of 4 for USB TMC
 #if SAMG55
-#define UDI_TMC_EPS_SIZE_ISO_FS   0
+#define UDI_TMC_EPS_SIZE_ISO_FS   0       // The TMC class does not have isochronous endpoints
 #else
-#define UDI_TMC_EPS_SIZE_ISO_FS   256
+#define UDI_TMC_EPS_SIZE_ISO_FS   0
 #endif
 
 //! endpoints size for high speed
-#define UDI_TMC_EPS_SIZE_INT_HS    64
+#define UDI_TMC_EPS_SIZE_INT_HS    0
 #define UDI_TMC_EPS_SIZE_BULK_HS  512
-#define UDI_TMC_EPS_SIZE_ISO_HS    64
+#define UDI_TMC_EPS_SIZE_ISO_HS    0
 
 //@}
 
@@ -146,7 +150,7 @@
  * USB Device Driver Configuration
  * @{
  */
-//! Limit the isochronous endpoint in singe bank mode for USBB driver
+//! Limit the isochronous endpoint in single bank mode for USBB driver
 //! to avoid exceeding USB DPRAM.
 #define UDD_ISOCHRONOUS_NB_BANK(ep) 1
 //@}

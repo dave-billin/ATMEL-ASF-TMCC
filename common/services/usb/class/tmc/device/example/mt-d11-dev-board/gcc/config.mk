@@ -59,7 +59,7 @@ CSRCS = \
        common/services/usb/class/tmc/device/udi_tmc_desc.c \
        common/services/usb/udc/udc.c                      \
        common/utils/interrupt/interrupt_sam_nvic.c        \
-       sam0/boards/samd11_xplained_pro/board_init.c       \
+       sam0/boards/mattairtech_mtd11/board_init.c       \
        sam0/drivers/extint/extint_callback.c              \
        sam0/drivers/extint/extint_sam_d_r_h/extint.c      \
        sam0/drivers/port/port.c                           \
@@ -163,7 +163,7 @@ CFLAGS =
 #   EXT_BOARD  Optional extension board in use, see boards/board.h for a list.
 CPPFLAGS = \
        -D ARM_MATH_CM0PLUS=true                           \
-       -D BOARD=SAMD11_XPLAINED_PRO                       \
+       -D BOARD=MATTAIRTECH_MTD11                         \
        -D EXTINT_CALLBACK_MODE=true                       \
        -D UDD_ENABLE                                      \
        -D USB_DEVICE_LPM_SUPPORT                          \

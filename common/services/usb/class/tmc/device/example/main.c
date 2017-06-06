@@ -57,8 +57,7 @@ static volatile bool main_b_tmc_enable = false;
 //! Size of buffer used for the loopback
 #define  MAIN_LOOPBACK_SIZE    1024
 COMPILER_WORD_ALIGNED
-		static uint8_t main_buf_loopback[MAIN_LOOPBACK_SIZE];
-static uint8_t main_buf_iso_sel;
+      static uint8_t main_buf_loopback[MAIN_LOOPBACK_SIZE];
 //@}
 
 // check configuration
@@ -72,224 +71,224 @@ static uint8_t main_buf_iso_sel;
 #endif
 
 void main_tmc_int_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
+      iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_tmc_int_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
+      iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_tmc_bulk_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
+      iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_tmc_bulk_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
+      iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_tmc_iso_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
+      iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_tmc_iso_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
+      iram_size_t nb_transfered, udd_ep_id_t ep);
 
 /*! \brief Main function. Execution starts here.
  */
 int main(void)
 {
-	irq_initialize_vectors();
-	cpu_irq_enable();
+   irq_initialize_vectors();
+   cpu_irq_enable();
 
-	// Initialize the sleep manager
-	sleepmgr_init();
+   // Initialize the sleep manager
+   sleepmgr_init();
 #if !SAM0
-	sysclk_init();
-	board_init();
+   sysclk_init();
+   board_init();
 #else
-	system_init();
+   system_init();
 #endif
-	ui_init();
+   ui_init();
 
-	// Start USB stack to authorize VBus monitoring
-	udc_start();
+   // Start USB stack to authorize VBus monitoring
+   udc_start();
 
-	// The main loop manages only the power mode
-	// because the USB management is done by interrupt
-	while (true) {
-		sleepmgr_enter_sleep();
-	}
+   // The main loop manages only the power mode
+   // because the USB management is done by interrupt
+   while (true) {
+      sleepmgr_enter_sleep();
+   }
 }
 
 void main_suspend_action(void)
 {
-	ui_powerdown();
+   ui_powerdown();
 }
 
 void main_resume_action(void)
 {
-	ui_wakeup();
+   ui_wakeup();
 }
 
 void main_sof_action(void)
 {
-	if (!main_b_tmc_enable)
-		return;
-	ui_process(udd_get_frame_number());
+   if (!main_b_tmc_enable)
+      return;
+   ui_process(udd_get_frame_number());
 }
 
 bool main_tmc_enable(void)
 {
-	main_b_tmc_enable = true;
-	// Start data reception on OUT endpoints
+   main_b_tmc_enable = true;
+   // Start data reception on OUT endpoints
 #if UDI_TMC_EPS_SIZE_INT_FS
-	main_tmc_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
+   main_tmc_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
 #if UDI_TMC_EPS_SIZE_BULK_FS
-	main_tmc_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
+   main_tmc_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
 #if UDI_TMC_EPS_SIZE_ISO_FS
-	main_buf_iso_sel=0;
-	main_tmc_iso_out_received(UDD_EP_TRANSFER_OK, 0, 0);
+   main_buf_iso_sel=0;
+   main_tmc_iso_out_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
-	return true;
+   return true;
 }
 
 void main_tmc_disable(void)
 {
-	main_b_tmc_enable = false;
+   main_b_tmc_enable = false;
 }
 
 bool main_setup_out_received(void)
 {
-	ui_loop_back_state(true);
-	udd_g_ctrlreq.payload = main_buf_loopback;
-	udd_g_ctrlreq.payload_size = min(
-			udd_g_ctrlreq.req.wLength,
-			sizeof(main_buf_loopback));
-	return true;
+   ui_loop_back_state(true);
+   udd_g_ctrlreq.payload = main_buf_loopback;
+   udd_g_ctrlreq.payload_size = min(
+         udd_g_ctrlreq.req.wLength,
+         sizeof(main_buf_loopback));
+   return true;
 }
 
 bool main_setup_in_received(void)
 {
-	ui_loop_back_state(false);
-	udd_g_ctrlreq.payload = main_buf_loopback;
-	udd_g_ctrlreq.payload_size =
-			min( udd_g_ctrlreq.req.wLength,
-			sizeof(main_buf_loopback) );
-	return true;
+   ui_loop_back_state(false);
+   udd_g_ctrlreq.payload = main_buf_loopback;
+   udd_g_ctrlreq.payload_size =
+         min( udd_g_ctrlreq.req.wLength,
+         sizeof(main_buf_loopback) );
+   return true;
 }
 
 #if UDI_TMC_EPS_SIZE_INT_FS
 void main_tmc_int_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep)
+      iram_size_t nb_transfered, udd_ep_id_t ep)
 {
-	UNUSED(nb_transfered);
-	UNUSED(ep);
-	if (UDD_EP_TRANSFER_OK != status) {
-		return; // Transfer aborted, then stop loopback
-	}
-	ui_loop_back_state(false);
-	// Wait a full buffer
-	udi_tmc_interrupt_out_run(
-			main_buf_loopback,
-			sizeof(main_buf_loopback),
-			main_tmc_int_out_received);
+   UNUSED(nb_transfered);
+   UNUSED(ep);
+   if (UDD_EP_TRANSFER_OK != status) {
+      return; // Transfer aborted, then stop loopback
+   }
+   ui_loop_back_state(false);
+   // Wait a full buffer
+   udi_tmc_interrupt_out_run(
+         main_buf_loopback,
+         sizeof(main_buf_loopback),
+         main_tmc_int_out_received);
 }
 
 void main_tmc_int_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep)
+      iram_size_t nb_transfered, udd_ep_id_t ep)
 {
-	UNUSED(ep);
-	if (UDD_EP_TRANSFER_OK != status) {
-		return; // Transfer aborted, then stop loopback
-	}
-	ui_loop_back_state(true);
-	// Send on IN endpoint the data received on endpoint OUT
-	udi_tmc_interrupt_in_run(
-			main_buf_loopback,
-			nb_transfered,
-			main_tmc_int_in_received);
+   UNUSED(ep);
+   if (UDD_EP_TRANSFER_OK != status) {
+      return; // Transfer aborted, then stop loopback
+   }
+   ui_loop_back_state(true);
+   // Send on IN endpoint the data received on endpoint OUT
+   udi_tmc_interrupt_in_run(
+         main_buf_loopback,
+         nb_transfered,
+         main_tmc_int_in_received);
 }
 #endif
 
 #if UDI_TMC_EPS_SIZE_BULK_FS
 void main_tmc_bulk_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep)
+      iram_size_t nb_transfered, udd_ep_id_t ep)
 {
-	UNUSED(nb_transfered);
-	UNUSED(ep);
-	if (UDD_EP_TRANSFER_OK != status) {
-		return; // Transfer aborted, then stop loopback
-	}
-	ui_loop_back_state(false);
-	// Wait a full buffer
-	udi_tmc_bulk_out_run(
-			main_buf_loopback,
-			sizeof(main_buf_loopback),
-			main_tmc_bulk_out_received);
+   UNUSED(nb_transfered);
+   UNUSED(ep);
+   if (UDD_EP_TRANSFER_OK != status) {
+      return; // Transfer aborted, then stop loopback
+   }
+   ui_loop_back_state(false);
+   // Wait a full buffer
+   udi_tmc_bulk_out_run(
+         main_buf_loopback,
+         sizeof(main_buf_loopback),
+         main_tmc_bulk_out_received);
 }
 
 void main_tmc_bulk_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep)
+      iram_size_t nb_transfered, udd_ep_id_t ep)
 {
-	UNUSED(ep);
-	if (UDD_EP_TRANSFER_OK != status) {
-		return; // Transfer aborted, then stop loopback
-	}
-	ui_loop_back_state(true);
-	// Send on IN endpoint the data received on endpoint OUT
-	udi_tmc_bulk_in_run(
-			main_buf_loopback,
-			nb_transfered,
-			main_tmc_bulk_in_received);
+   UNUSED(ep);
+   if (UDD_EP_TRANSFER_OK != status) {
+      return; // Transfer aborted, then stop loopback
+   }
+   ui_loop_back_state(true);
+   // Send on IN endpoint the data received on endpoint OUT
+   udi_tmc_bulk_in_run(
+         main_buf_loopback,
+         nb_transfered,
+         main_tmc_bulk_in_received);
 }
 #endif
 
 #if UDI_TMC_EPS_SIZE_ISO_FS
 void main_tmc_iso_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep)
+      iram_size_t nb_transfered, udd_ep_id_t ep)
 {
-	UNUSED(status);
-	UNUSED(nb_transfered);
-	UNUSED(ep);
-	ui_loop_back_state(false);
+   UNUSED(status);
+   UNUSED(nb_transfered);
+   UNUSED(ep);
+   ui_loop_back_state(false);
 }
 
 void main_tmc_iso_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep)
+      iram_size_t nb_transfered, udd_ep_id_t ep)
 {
-	uint8_t *buf_ptr;
-	UNUSED(ep);
+   uint8_t *buf_ptr;
+   UNUSED(ep);
 
-	if (UDD_EP_TRANSFER_OK != status) {
-		return; // Transfer aborted, then stop loopback
-	}
+   if (UDD_EP_TRANSFER_OK != status) {
+      return; // Transfer aborted, then stop loopback
+   }
 
-	if (nb_transfered) {
-		ui_loop_back_state(true);
-		// Send on IN endpoint the data received on endpoint OUT
-		buf_ptr = &main_buf_loopback[ main_buf_iso_sel
-				*(sizeof(main_buf_loopback)/2) ];
-		udi_tmc_iso_in_run(
-				buf_ptr,
-				nb_transfered,
-				main_tmc_iso_in_received);
-	}
+   if (nb_transfered) {
+      ui_loop_back_state(true);
+      // Send on IN endpoint the data received on endpoint OUT
+      buf_ptr = &main_buf_loopback[ main_buf_iso_sel
+            *(sizeof(main_buf_loopback)/2) ];
+      udi_tmc_iso_in_run(
+            buf_ptr,
+            nb_transfered,
+            main_tmc_iso_in_received);
+   }
 
-	// Switch of buffer
-	main_buf_iso_sel = main_buf_iso_sel? 0:1;
+   // Switch of buffer
+   main_buf_iso_sel = main_buf_iso_sel? 0:1;
 
-	// Immediately enable a transfer on next USB isochronous OUT packet
-	// to avoid to skip a USB packet.
-	// NOTE:
-	// Here the expected buffer size is equal to endpoint size.
-	// Thus, this transfer request will end after reception of
-	// one USB packet.
-	//
-	// When using buffer size larger than endpoint size,
-	// the requested transfer is stopped when the buffer is = full*.
-	// *on USBC and XMEGA USB driver, the buffer is full
-	// when "number of data transfered" > "buffer size" - "endpoint size".
-	buf_ptr = &main_buf_loopback[ main_buf_iso_sel
-			*(sizeof(main_buf_loopback)/2) ];
+   // Immediately enable a transfer on next USB isochronous OUT packet
+   // to avoid to skip a USB packet.
+   // NOTE:
+   // Here the expected buffer size is equal to endpoint size.
+   // Thus, this transfer request will end after reception of
+   // one USB packet.
+   //
+   // When using buffer size larger than endpoint size,
+   // the requested transfer is stopped when the buffer is = full*.
+   // *on USBC and XMEGA USB driver, the buffer is full
+   // when "number of data transfered" > "buffer size" - "endpoint size".
+   buf_ptr = &main_buf_loopback[ main_buf_iso_sel
+         *(sizeof(main_buf_loopback)/2) ];
 
-	// Send on IN endpoint the data received on endpoint OUT
-	udi_tmc_iso_out_run(
-			buf_ptr,
-			udd_is_high_speed()?
-				UDI_TMC_EPS_SIZE_ISO_HS:UDI_TMC_EPS_SIZE_ISO_FS,
-			main_tmc_iso_out_received);
+   // Send on IN endpoint the data received on endpoint OUT
+   udi_tmc_iso_out_run(
+         buf_ptr,
+         udd_is_high_speed()?
+            UDI_TMC_EPS_SIZE_ISO_HS:UDI_TMC_EPS_SIZE_ISO_FS,
+         main_tmc_iso_out_received);
 }
 #endif
 
