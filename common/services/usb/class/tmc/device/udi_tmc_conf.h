@@ -67,18 +67,8 @@
 #define  UDI_TMC_EP_BULK_IN       (3 | USB_EP_DIR_IN)
 #define  UDI_TMC_EP_BULK_OUT      (4 | USB_EP_DIR_OUT)
 #else
-#define  UDI_TMC_EP_INTERRUPT_IN  (1 | USB_EP_DIR_IN)
-#define  UDI_TMC_EP_INTERRUPT_OUT (2 | USB_EP_DIR_OUT)
-#define  UDI_TMC_EP_BULK_IN       ((((UDI_TMC_EPS_SIZE_INT_FS)?2:0)+1)\
-		| USB_EP_DIR_IN)
-#define  UDI_TMC_EP_BULK_OUT      ((((UDI_TMC_EPS_SIZE_INT_FS)?2:0)+2)\
-		| USB_EP_DIR_OUT)
-#define  UDI_TMC_EP_ISO_IN        ((((UDI_TMC_EPS_SIZE_INT_FS)?2:0)+ \
-	((UDI_TMC_EPS_SIZE_BULK_FS)?2:0)+1)\
-		| USB_EP_DIR_IN)
-#define  UDI_TMC_EP_ISO_OUT       ((((UDI_TMC_EPS_SIZE_INT_FS)?2:0)+ \
-	((UDI_TMC_EPS_SIZE_BULK_FS)?2:0)+2)\
-		| USB_EP_DIR_OUT)
+#define  UDI_TMC_EP_BULK_IN  (1 | USB_EP_DIR_IN)
+#define  UDI_TMC_EP_BULK_OUT (2 | USB_EP_DIR_OUT)
 #endif
 
 //! Interface number is 0 because it is the unique interface

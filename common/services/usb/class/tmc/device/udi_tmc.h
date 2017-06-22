@@ -103,37 +103,7 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
  * \name Endpoint descriptors
  * @{
  */
-#if UDI_TMC_EPS_SIZE_INT_FS
 
-#error Interrupt enpoints are not supported by this TMC implementation!
-
-# define UDI_TMC_EPS_INT_DESC \
-   .ep_interrupt_in.bLength           = sizeof(usb_ep_desc_t),\
-   .ep_interrupt_in.bDescriptorType   = USB_DT_ENDPOINT,\
-   .ep_interrupt_in.bEndpointAddress  = UDI_TMC_EP_INTERRUPT_IN,\
-   .ep_interrupt_in.bmAttributes      = USB_EP_TYPE_INTERRUPT,\
-   .ep_interrupt_in.bInterval         = 1,\
-   .ep_interrupt_out.bLength          = sizeof(usb_ep_desc_t),\
-   .ep_interrupt_out.bDescriptorType  = USB_DT_ENDPOINT,\
-   .ep_interrupt_out.bEndpointAddress = UDI_TMC_EP_INTERRUPT_OUT,\
-   .ep_interrupt_out.bmAttributes     = USB_EP_TYPE_INTERRUPT,\
-   .ep_interrupt_out.bInterval        = 1,
-
-# define UDI_TMC_EPS_INT_DESC_FS \
-   .ep_interrupt_in.wMaxPacketSize    = LE16(UDI_TMC_EPS_SIZE_INT_FS),\
-   .ep_interrupt_out.wMaxPacketSize   = LE16(UDI_TMC_EPS_SIZE_INT_FS),
-
-# define UDI_TMC_EPS_INT_DESC_HS \
-   .ep_interrupt_in.wMaxPacketSize    = LE16(UDI_TMC_EPS_SIZE_INT_HS),\
-   .ep_interrupt_out.wMaxPacketSize   = LE16(UDI_TMC_EPS_SIZE_INT_HS),
-
-#else
-# define UDI_TMC_EPS_INT_DESC
-# define UDI_TMC_EPS_INT_DESC_FS
-# define UDI_TMC_EPS_INT_DESC_HS
-#endif
-
-#if UDI_TMC_EPS_SIZE_BULK_FS
 # define UDI_TMC_EPS_BULK_DESC \
    .ep_bulk_in.bLength                = sizeof(usb_ep_desc_t),\
    .ep_bulk_in.bDescriptorType        = USB_DT_ENDPOINT,\
@@ -154,60 +124,14 @@ extern UDC_DESC_STORAGE udi_api_t udi_api_tmc;
    .ep_bulk_in.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_BULK_HS),\
    .ep_bulk_out.wMaxPacketSize        = LE16(UDI_TMC_EPS_SIZE_BULK_HS),
 
-#else
-# define UDI_TMC_EPS_BULK_DESC
-# define UDI_TMC_EPS_BULK_DESC_FS
-# define UDI_TMC_EPS_BULK_DESC_HS
-#endif
-
-#if UDI_TMC_EPS_SIZE_ISO_FS
-
-#error Isochronous enpoints are not supported by the TMC class!
-
-# define UDI_TMC_EPS_ISO_DESC \
-   .ep_iso_in.bLength                 = sizeof(usb_ep_desc_t),\
-   .ep_iso_in.bDescriptorType         = USB_DT_ENDPOINT,\
-   .ep_iso_in.bEndpointAddress        = UDI_TMC_EP_ISO_IN,\
-   .ep_iso_in.bmAttributes            = USB_EP_TYPE_ISOCHRONOUS,\
-   .ep_iso_in.bInterval               = 1,\
-   .ep_iso_out.bLength                = sizeof(usb_ep_desc_t),\
-   .ep_iso_out.bDescriptorType        = USB_DT_ENDPOINT,\
-   .ep_iso_out.bEndpointAddress       = UDI_TMC_EP_ISO_OUT,\
-   .ep_iso_out.bmAttributes           = USB_EP_TYPE_ISOCHRONOUS,\
-   .ep_iso_out.bInterval              = 1,
-
-# define UDI_TMC_EPS_ISO_DESC_FS \
-   .ep_iso_in.wMaxPacketSize          = LE16(UDI_TMC_EPS_SIZE_ISO_FS),\
-   .ep_iso_out.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_ISO_FS),
-
-# define UDI_TMC_EPS_ISO_DESC_HS \
-   .ep_iso_in.wMaxPacketSize          = LE16(UDI_TMC_EPS_SIZE_ISO_HS),\
-   .ep_iso_out.wMaxPacketSize         = LE16(UDI_TMC_EPS_SIZE_ISO_HS),
-
-#else
-# define UDI_TMC_EPS_ISO_DESC
-# define UDI_TMC_EPS_ISO_DESC_FS
-# define UDI_TMC_EPS_ISO_DESC_HS
-#endif
-
 //@}
 
 //! Interface descriptor structure for TMC Class interface
-typedef struct {
+typedef struct
+{
    usb_iface_desc_t iface0;
-   usb_iface_desc_t iface1;
-#if UDI_TMC_EPS_SIZE_INT_FS
-   usb_ep_desc_t ep_interrupt_in;
-   usb_ep_desc_t ep_interrupt_out;
-#endif
-#if UDI_TMC_EPS_SIZE_BULK_FS
    usb_ep_desc_t ep_bulk_in;
    usb_ep_desc_t ep_bulk_out;
-#endif
-#if UDI_TMC_EPS_SIZE_ISO_FS
-   usb_ep_desc_t ep_iso_in;
-   usb_ep_desc_t ep_iso_out;
-#endif
 } udi_tmc_desc_t;
 
 //! By default no string associated to this interface
@@ -233,24 +157,20 @@ typedef struct {
    .iface0.bInterfaceSubClass = TMC_SUBCLASS,\
    .iface0.bInterfaceProtocol = TMC_PROTOCOL,\
    .iface0.iInterface         = UDI_TMC_STRING_ID,\
-   UDI_TMC_EPS_INT_DESC \
    UDI_TMC_EPS_BULK_DESC \
-   UDI_TMC_EPS_ISO_DESC \
 
 //! Content of TMC interface descriptor for full speed only
-#define UDI_TMC_DESC_FS {\
+#define UDI_TMC_DESC_FS \
+   {\
    UDI_TMC_DESC \
-   UDI_TMC_EPS_INT_DESC_FS \
    UDI_TMC_EPS_BULK_DESC_FS \
-   UDI_TMC_EPS_ISO_DESC_FS \
    }
 
 //! Content of TMC interface descriptor for high speed only
-#define UDI_TMC_DESC_HS   {\
+#define UDI_TMC_DESC_HS \
+   {\
    UDI_TMC_DESC \
-   UDI_TMC_EPS_INT_DESC_HS \
    UDI_TMC_EPS_BULK_DESC_HS \
-   UDI_TMC_EPS_ISO_DESC_HS \
    }
 //@}
 
@@ -266,40 +186,6 @@ typedef struct {
  * See \ref udi_tmc_quickstart.
  * @{
  */
-
-#if UDI_TMC_EPS_SIZE_INT_FS || defined(__DOXYGEN__)
-/**
- * \brief Start a transfer on interrupt IN
- *
- * When the transfer is finished or aborted (stall, reset, ...), the \a callback is called.
- * The \a callback returns the transfer status and eventually the number of byte transfered.
- *
- * \param buf           Buffer on Internal RAM to send or fill.
- *                      It must be align, then use COMPILER_WORD_ALIGNED.
- * \param buf_size      Buffer size to send or fill
- * \param callback      NULL or function to call at the end of transfer
- *
- * \return \c 1 if function was successfully done, otherwise \c 0.
- */
-bool udi_tmc_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
-                              udd_callback_trans_t callback);
-
-/**
- * \brief Start a transfer on interrupt OUT
- *
- * When the transfer is finished or aborted (stall, reset, ...), the \a callback is called.
- * The \a callback returns the transfer status and eventually the number of byte transfered.
- *
- * \param buf           Buffer on Internal RAM to send or fill.
- *                      It must be align, then use COMPILER_WORD_ALIGNED.
- * \param buf_size      Buffer size to send or fill
- * \param callback      NULL or function to call at the end of transfer
- *
- * \return \c 1 if function was successfully done, otherwise \c 0.
- */
-bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
-                               udd_callback_trans_t callback);
-#endif
 
 #if UDI_TMC_EPS_SIZE_BULK_FS || defined(__DOXYGEN__)
 /**
@@ -335,40 +221,6 @@ bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
                           udd_callback_trans_t callback);
 #endif
 
-
-#if UDI_TMC_EPS_SIZE_ISO_FS || defined(__DOXYGEN__)
-/**
- * \brief Start a transfer on isochronous IN
- *
- * When the transfer is finished or aborted (stall, reset, ...), the \a callback is called.
- * The \a callback returns the transfer status and eventually the number of byte transfered.
- *
- * \param buf           Buffer on Internal RAM to send or fill.
- *                      It must be align, then use COMPILER_WORD_ALIGNED.
- * \param buf_size      Buffer size to send or fill
- * \param callback      NULL or function to call at the end of transfer
- *
- * \return \c 1 if function was successfully done, otherwise \c 0.
- */
-bool udi_tmc_iso_in_run(uint8_t * buf, iram_size_t buf_size,
-                        udd_callback_trans_t callback);
-
-/**
- * \brief Start a transfer on isochronous OUT
- *
- * When the transfer is finished or aborted (stall, reset, ...), the \a callback is called.
- * The \a callback returns the transfer status and eventually the number of byte transfered.
- *
- * \param buf           Buffer on Internal RAM to send or fill.
- *                      It must be align, then use COMPILER_WORD_ALIGNED.
- * \param buf_size      Buffer size to send or fill
- * \param callback      NULL or function to call at the end of transfer
- *
- * \return \c 1 if function was successfully done, otherwise \c 0.
- */
-bool udi_tmc_iso_out_run(uint8_t * buf, iram_size_t buf_size,
-                         udd_callback_trans_t callback);
-#endif
 
 //@}
 

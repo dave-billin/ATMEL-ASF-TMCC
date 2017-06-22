@@ -69,17 +69,17 @@
  * @{
  */
 bool udi_tmc_enable(void);
-void udi_vendor_disable(void);
-bool udi_vendor_setup(void);
-uint8_t udi_vendor_getsetting(void);
+void udi_tmc_disable(void);
+bool udi_tmc_setup(void);
+uint8_t udi_tmc_getsetting(void);
 
 //! Global structure which contains standard UDI API for UDC
 UDC_DESC_STORAGE udi_api_t udi_api_tmc = {
-	.enable = udi_tmc_enable,
-	.disable = udi_vendor_disable,
-	.setup = udi_vendor_setup,
-	.getsetting = udi_vendor_getsetting,
-	.sof_notify = NULL,
+   .enable = udi_tmc_enable,
+   .disable = udi_tmc_disable,
+   .setup = udi_tmc_setup,
+   .getsetting = udi_tmc_getsetting,
+   .sof_notify = NULL,
 };
 //@}
 
@@ -93,7 +93,7 @@ UDC_DESC_STORAGE udi_api_t udi_api_tmc = {
  */
 
 //! USB descriptor alternate setting used
-static uint8_t udi_vendor_alternate_setting = 0;
+static uint8_t udi_tmc_alternate_setting = 0;
 
 /**
  * \name Internal routines
@@ -101,47 +101,58 @@ static uint8_t udi_vendor_alternate_setting = 0;
 //@{
 bool udi_tmc_enable(void)
 {
-	udi_vendor_alternate_setting = udc_get_interface_desc()->bAlternateSetting;
-	if (1 == udi_vendor_alternate_setting) {
-		// Call application callback
-		// to notify that interface is enabled
-		if (!UDI_TMC_ENABLE_EXT()) {
-			return false;
-		}
-	}
-	return true;
+   udi_tmc_alternate_setting = udc_get_interface_desc()->bAlternateSetting;
+   if (1 == udi_tmc_alternate_setting)
+   {
+      // Call application callback
+      // to notify that interface is enabled
+      if (!UDI_TMC_ENABLE_EXT())
+      {
+         return false;
+      }
+   }
+   return true;
 }
 
 
-void udi_vendor_disable(void)
+void udi_tmc_disable(void)
 {
-	if (1 == udi_vendor_alternate_setting) {
-		UDI_TMC_DISABLE_EXT();
-	}
+   if (1 == udi_tmc_alternate_setting)
+   {
+      UDI_TMC_DISABLE_EXT();
+   }
 }
 
 
-bool udi_vendor_setup(void)
+bool udi_tmc_setup(void)
 {
-	if (Udd_setup_is_in()) {
-		if ((Udd_setup_type() == USB_REQ_TYPE_VENDOR)
-				&& (udd_g_ctrlreq.req.bRequest == 0)) {
-			return UDI_TMC_SETUP_IN_RECEIVED();
-		}
-	}
-	if (Udd_setup_is_out()) {
-		if ((Udd_setup_type() == USB_REQ_TYPE_VENDOR)
-				&& (udd_g_ctrlreq.req.bRequest == 0)
-				&& (0 != udd_g_ctrlreq.req.wLength)) {
-			return UDI_TMC_SETUP_OUT_RECEIVED();
-		}
-	}
-	return false; // Not supported request
+   int setup_type = Udd_setup_type();
+   bool result = false; // Default to handling as an unsupported request
+
+   if (Udd_setup_is_in())
+   {
+      if ((setup_type == USB_REQ_TYPE_VENDOR)
+            && (udd_g_ctrlreq.req.bRequest == 0))
+      {
+         result = UDI_TMC_SETUP_IN_RECEIVED();
+      }
+   }
+   else if (Udd_setup_is_out())
+   {
+      if ((setup_type == USB_REQ_TYPE_VENDOR)
+            && (udd_g_ctrlreq.req.bRequest == 0)
+            && (0 != udd_g_ctrlreq.req.wLength))
+      {
+         result = UDI_TMC_SETUP_OUT_RECEIVED();
+      }
+   }
+
+   return result;
 }
 
-uint8_t udi_vendor_getsetting(void)
+uint8_t udi_tmc_getsetting(void)
 {
-	return udi_vendor_alternate_setting;
+   return udi_tmc_alternate_setting;
 }
 //@}
 
@@ -160,13 +171,13 @@ uint8_t udi_vendor_getsetting(void)
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
 bool udi_tmc_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
-		udd_callback_trans_t callback)
+                              udd_callback_trans_t callback)
 {
-	return udd_ep_run(UDI_TMC_EP_INTERRUPT_IN,
-			false,
-			buf,
-			buf_size,
-			callback);
+   return udd_ep_run(UDI_TMC_EP_INTERRUPT_IN,
+                     false,
+                     buf,
+                     buf_size,
+                     callback);
 }
 
 
@@ -184,13 +195,13 @@ bool udi_tmc_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
 bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
-		udd_callback_trans_t callback)
+                               udd_callback_trans_t callback)
 {
-	return udd_ep_run(UDI_TMC_EP_INTERRUPT_OUT,
-			false,
-			buf,
-			buf_size,
-			callback);
+   return udd_ep_run(UDI_TMC_EP_INTERRUPT_OUT,
+                     false,
+                     buf,
+                     buf_size,
+                     callback);
 }
 #endif
 
@@ -209,13 +220,13 @@ bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
 bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
-		udd_callback_trans_t callback)
+                         udd_callback_trans_t callback)
 {
-	return udd_ep_run(UDI_TMC_EP_BULK_IN,
-			false,
-			buf,
-			buf_size,
-			callback);
+   return udd_ep_run(UDI_TMC_EP_BULK_IN,
+                     false,
+                     buf,
+                     buf_size,
+                     callback);
 }
 
 
@@ -233,13 +244,13 @@ bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
 bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
-		udd_callback_trans_t callback)
+                          udd_callback_trans_t callback)
 {
-	return udd_ep_run(UDI_TMC_EP_BULK_OUT,
-			false,
-			buf,
-			buf_size,
-			callback);
+   return udd_ep_run(UDI_TMC_EP_BULK_OUT,
+                     false,
+                     buf,
+                     buf_size,
+                     callback);
 }
 #endif
 
@@ -259,13 +270,13 @@ bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
 bool udi_tmc_iso_in_run(uint8_t * buf, iram_size_t buf_size,
-		udd_callback_trans_t callback)
+                        udd_callback_trans_t callback)
 {
-	return udd_ep_run(UDI_TMC_EP_ISO_IN,
-			false,
-			buf,
-			buf_size,
-			callback);
+   return udd_ep_run(UDI_TMC_EP_ISO_IN,
+                     false,
+                     buf,
+                     buf_size,
+                     callback);
 }
 
 
@@ -283,13 +294,13 @@ bool udi_tmc_iso_in_run(uint8_t * buf, iram_size_t buf_size,
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
 bool udi_tmc_iso_out_run(uint8_t * buf, iram_size_t buf_size,
-		udd_callback_trans_t callback)
+      udd_callback_trans_t callback)
 {
-	return udd_ep_run(UDI_TMC_EP_ISO_OUT,
-			false,
-			buf,
-			buf_size,
-			callback);
+   return udd_ep_run(UDI_TMC_EP_ISO_OUT,
+                     false,
+                     buf,
+                     buf_size,
+                     callback);
 }
 #endif
 

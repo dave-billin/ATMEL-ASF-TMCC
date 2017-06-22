@@ -66,7 +66,8 @@
 
 //! USB Device Descriptor
 UDC_DATA(4)
-UDC_DESC_STORAGE usb_dev_desc_t udc_device_desc = {
+UDC_DESC_STORAGE usb_dev_desc_t udc_device_desc =
+{
 	.bLength                   = sizeof(usb_dev_desc_t),
 	.bDescriptorType           = USB_DT_DEVICE,
 	.bcdUSB                    = LE16(USB_V2_0),
@@ -113,39 +114,41 @@ UDC_DESC_STORAGE usb_dev_qual_desc_t udc_device_qual = {
 
 //! Structure for USB Device Configuration Descriptor
 COMPILER_PACK_SET(1)
-typedef struct {
-	usb_conf_desc_t conf;
-	udi_tmc_desc_t udi_vendor;
+typedef struct
+{
+	usb_conf_desc_t config_desc;
+	udi_tmc_desc_t ifc_and_endpoint_desc;
 } udc_desc_t;
 COMPILER_PACK_RESET()
 
 //! USB Device Configuration Descriptor filled for FS
 UDC_DATA(4)
-UDC_DESC_STORAGE udc_desc_t udc_desc_fs = {
-	.conf.bLength              = sizeof(usb_conf_desc_t),
-	.conf.bDescriptorType      = USB_DT_CONFIGURATION,
-	.conf.wTotalLength         = LE16(sizeof(udc_desc_t)),
-	.conf.bNumInterfaces       = USB_DEVICE_NB_INTERFACE,
-	.conf.bConfigurationValue  = 1,
-	.conf.iConfiguration       = 0,
-	.conf.bmAttributes         = USB_CONFIG_ATTR_MUST_SET | USB_DEVICE_ATTR,
-	.conf.bMaxPower            = USB_CONFIG_MAX_POWER(USB_DEVICE_POWER),
-	.udi_vendor                = UDI_TMC_DESC_FS,
+UDC_DESC_STORAGE udc_desc_t udc_desc_fs =
+{
+	.config_desc.bLength              = sizeof(usb_conf_desc_t),
+	.config_desc.bDescriptorType      = USB_DT_CONFIGURATION,
+	.config_desc.wTotalLength         = LE16(sizeof(udc_desc_t)),
+	.config_desc.bNumInterfaces       = USB_DEVICE_NB_INTERFACE,
+	.config_desc.bConfigurationValue  = 1,
+	.config_desc.iConfiguration       = 0,
+	.config_desc.bmAttributes         = USB_CONFIG_ATTR_MUST_SET | USB_DEVICE_ATTR,
+	.config_desc.bMaxPower            = USB_CONFIG_MAX_POWER(USB_DEVICE_POWER),
+	.ifc_and_endpoint_desc     = UDI_TMC_DESC_FS,
 };
 
 #ifdef USB_DEVICE_HS_SUPPORT
 //! USB Device Configuration Descriptor filled for HS
 UDC_DATA(4)
 UDC_DESC_STORAGE udc_desc_t udc_desc_hs = {
-	.conf.bLength              = sizeof(usb_conf_desc_t),
-	.conf.bDescriptorType      = USB_DT_CONFIGURATION,
-	.conf.wTotalLength         = LE16(sizeof(udc_desc_t)),
-	.conf.bNumInterfaces       = USB_DEVICE_NB_INTERFACE,
-	.conf.bConfigurationValue  = 1,
-	.conf.iConfiguration       = 0,
-	.conf.bmAttributes         = USB_CONFIG_ATTR_MUST_SET | USB_DEVICE_ATTR,
-	.conf.bMaxPower            = USB_CONFIG_MAX_POWER(USB_DEVICE_POWER),
-	.udi_vendor                = UDI_TMC_DESC_HS,
+	.config_desc.bLength              = sizeof(usb_conf_desc_t),
+	.config_desc.bDescriptorType      = USB_DT_CONFIGURATION,
+	.config_desc.wTotalLength         = LE16(sizeof(udc_desc_t)),
+	.config_desc.bNumInterfaces       = USB_DEVICE_NB_INTERFACE,
+	.config_desc.bConfigurationValue  = 1,
+	.config_desc.iConfiguration       = 0,
+	.config_desc.bmAttributes         = USB_CONFIG_ATTR_MUST_SET | USB_DEVICE_ATTR,
+	.config_desc.bMaxPower            = USB_CONFIG_MAX_POWER(USB_DEVICE_POWER),
+	.ifc_and_endpoint_desc     = UDI_TMC_DESC_HS,
 };
 #endif
 
@@ -156,7 +159,7 @@ UDC_DESC_STORAGE udc_desc_t udc_desc_hs = {
 //@{
 
 //! Associate an UDI for each USB interface
-UDC_DESC_STORAGE udi_api_t *udi_apis[USB_DEVICE_NB_INTERFACE] = {
+UDC_DESC_STORAGE udi_api_t* udi_apis[USB_DEVICE_NB_INTERFACE] = {
 	&udi_api_tmc,
 };
 

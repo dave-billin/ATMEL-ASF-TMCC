@@ -10,6 +10,9 @@
 #include <conf_board.h>
 #include <port.h>
 
+
+// The 'board.h' file declares a common function, 'board_init'.  Here, we make
+// board_init an alias for the local function, system_board_init.
 #if defined(__GNUC__)
 void board_init(void) WEAK __attribute__((alias("system_board_init")));
 #elif defined(__ICCARM__)

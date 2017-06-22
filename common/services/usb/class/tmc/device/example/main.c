@@ -50,41 +50,62 @@
 
 static volatile bool main_b_tmc_enable = false;
 
-/**
- * \name Buffer for loopback
- */
-//@{
-//! Size of buffer used for the loopback
-#define  MAIN_LOOPBACK_SIZE    1024
-COMPILER_WORD_ALIGNED
-      static uint8_t main_buf_loopback[MAIN_LOOPBACK_SIZE];
+
+/// Size of the buffer used for TMCC data
+#define  TMCC_BUFFER_SIZE    1024
+
+/// Buffer used for TMCC data
+COMPILER_WORD_ALIGNED static uint8_t adc_data_buffer[TMCC_BUFFER_SIZE];
 //@}
 
 // check configuration
-#if UDI_TMC_EPS_SIZE_ISO_FS>(MAIN_LOOPBACK_SIZE/2)
-# error UDI_TMC_EPS_SIZE_ISO_FS must be <= MAIN_LOOPBACK_SIZE/2 in cond_usb.h
+#if UDI_TMC_EPS_SIZE_ISO_FS>(TMCC_BUFFER_SIZE/2)
+# error UDI_TMC_EPS_SIZE_ISO_FS must be <= TMCC_BUFFER_SIZE/2 in cond_usb.h
 #endif
 #ifdef USB_DEVICE_HS_SUPPORT
-# if UDI_TMC_EPS_SIZE_ISO_HS>(MAIN_LOOPBACK_SIZE/2)
-#   error UDI_TMC_EPS_SIZE_ISO_HS must be <= MAIN_LOOPBACK_SIZE/2 in cond_usb.h
+# if UDI_TMC_EPS_SIZE_ISO_HS>(TMCC_BUFFER_SIZE/2)
+#   error UDI_TMC_EPS_SIZE_ISO_HS must be <= TMCC_BUFFER_SIZE/2 in cond_usb.h
 # endif
 #endif
 
+// Function Prototypes
 void main_tmc_int_in_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_tmc_int_out_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_tmc_bulk_in_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_tmc_bulk_out_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_tmc_iso_in_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_tmc_iso_out_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep);
+                              iram_size_t nb_transfered, udd_ep_id_t ep);
 
-/*! \brief Main function. Execution starts here.
+void main_tmc_int_out_received(udd_ep_status_t status,
+                               iram_size_t nb_transfered, udd_ep_id_t ep);
+
+void main_tmc_bulk_in_received(udd_ep_status_t status,
+                               iram_size_t nb_transfered, udd_ep_id_t ep);
+
+void main_tmc_bulk_out_received(udd_ep_status_t status,
+                                iram_size_t nb_transfered, udd_ep_id_t ep);
+
+void main_tmc_iso_in_received(udd_ep_status_t status,
+                              iram_size_t nb_transfered, udd_ep_id_t ep);
+
+void main_tmc_iso_out_received(udd_ep_status_t status,
+                               iram_size_t nb_transfered, udd_ep_id_t ep);
+
+
+//==============================================================================
+static inline void main_fill_usb_buffer( uint16_t seed_value )
+{
+   int index;
+   for ( index = 0; index < TMCC_BUFFER_SIZE; ++index )
+   {
+      adc_data_buffer[index] = seed_value;
+   }
+}
+
+
+//==============================================================================
+/** \brief Execution entry point
+ *  \details
+ *    This function invokes initialization routines to configure and start the
+ *    USB interface, then enters a permanent idle loop.
  */
+//==============================================================================
 int main(void)
 {
    irq_initialize_vectors();
@@ -98,35 +119,56 @@ int main(void)
 #else
    system_init();
 #endif
+
+   // Initialize the target board using the board's API
    ui_init();
 
    // Start USB stack to authorize VBus monitoring
    udc_start();
 
-   // The main loop manages only the power mode
+   // Enter an idle loop.  This loop only manages the power mode
    // because the USB management is done by interrupt
-   while (true) {
+   while (true)
+   {
       sleepmgr_enter_sleep();
    }
 }
 
+
+//==============================================================================
+// Called when a USB suspend event occurs
 void main_suspend_action(void)
 {
    ui_powerdown();
 }
 
+//==============================================================================
+// Called when a USB resume event occurs
 void main_resume_action(void)
 {
    ui_wakeup();
 }
 
+//==============================================================================
+// Called each time a USB start-of-frame is received to be processed
 void main_sof_action(void)
 {
-   if (!main_b_tmc_enable)
-      return;
-   ui_process(udd_get_frame_number());
+   // Only process frames if enabled
+   if ( main_b_tmc_enable )
+   {
+      uint16_t frame_number = udd_get_frame_number();
+      main_fill_usb_buffer(frame_number); // Fill the data buffer
+      ui_process(frame_number);  // Update the LED on the board
+   }
 }
 
+//==============================================================================
+/* After the device enumeration (detecting and identifying USB devices), the USB
+ * host starts the device configuration. When the USB TMC interface from the
+ * device is accepted by the host, the USB host enables this interface and this
+ * callback function (assigned in conf_usb.h via the UDI_TMC_ENABLE_EXT() is
+ * called.  It indicates that transfers to and from the device are enabled.
+ */
 bool main_tmc_enable(void)
 {
    main_b_tmc_enable = true;
@@ -144,32 +186,51 @@ bool main_tmc_enable(void)
    return true;
 }
 
+//==============================================================================
+/* When the USB device is unplugged or is reset by the USB host, the USB
+ * interface is disabled and this callback function (assigned in conf_usb.h via
+ * the UDI_VENDOR_DISABLE_EXT macro) is invoked.  Calling this function disables
+ * data transfers on the TMCC device
+ */
 void main_tmc_disable(void)
 {
    main_b_tmc_enable = false;
 }
 
+//==============================================================================
+/// This callback function is invoked when an event occurs on the OUT control
+/// endpoint
 bool main_setup_out_received(void)
 {
+   // Tell the dev board API that we are connected (uses the API defined for
+   // the MattairTech MT-D11 board
    ui_loop_back_state(true);
-   udd_g_ctrlreq.payload = main_buf_loopback;
-   udd_g_ctrlreq.payload_size = min(
-         udd_g_ctrlreq.req.wLength,
-         sizeof(main_buf_loopback));
+
+   udd_g_ctrlreq.payload = adc_data_buffer;
+   udd_g_ctrlreq.payload_size = min( udd_g_ctrlreq.req.wLength,
+                                     sizeof(adc_data_buffer) );
    return true;
 }
 
+//==============================================================================
+/// This callback function is invoked when an event occurs on the IN control
+/// endpoint
 bool main_setup_in_received(void)
 {
+   // Tell the dev board API that we are disconnected (uses the API defined for
+   // the MattairTech MT-D11 board
    ui_loop_back_state(false);
-   udd_g_ctrlreq.payload = main_buf_loopback;
-   udd_g_ctrlreq.payload_size =
-         min( udd_g_ctrlreq.req.wLength,
-         sizeof(main_buf_loopback) );
+
+   udd_g_ctrlreq.payload = adc_data_buffer;
+   udd_g_ctrlreq.payload_size = min( udd_g_ctrlreq.req.wLength,
+                                     sizeof(adc_data_buffer) );
    return true;
 }
 
+
 #if UDI_TMC_EPS_SIZE_INT_FS
+//==============================================================================
+// Process events on the interrupt IN endpoint
 void main_tmc_int_in_received(udd_ep_status_t status,
       iram_size_t nb_transfered, udd_ep_id_t ep)
 {
@@ -181,11 +242,13 @@ void main_tmc_int_in_received(udd_ep_status_t status,
    ui_loop_back_state(false);
    // Wait a full buffer
    udi_tmc_interrupt_out_run(
-         main_buf_loopback,
-         sizeof(main_buf_loopback),
+         adc_data_buffer,
+         sizeof(adc_data_buffer),
          main_tmc_int_out_received);
 }
 
+//==============================================================================
+// Process events on the interrupt OUT endpoint
 void main_tmc_int_out_received(udd_ep_status_t status,
       iram_size_t nb_transfered, udd_ep_id_t ep)
 {
@@ -196,101 +259,78 @@ void main_tmc_int_out_received(udd_ep_status_t status,
    ui_loop_back_state(true);
    // Send on IN endpoint the data received on endpoint OUT
    udi_tmc_interrupt_in_run(
-         main_buf_loopback,
+         adc_data_buffer,
          nb_transfered,
          main_tmc_int_in_received);
 }
 #endif
 
+
 #if UDI_TMC_EPS_SIZE_BULK_FS
-void main_tmc_bulk_in_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep)
+//==============================================================================
+/* Process events on the bulk IN endpoint
+ *
+ * @param status
+ *   Status of the bulk IN endpoint
+ *
+ * @param nb_transferred
+ *   Number of Bytes transferred on the endpoint
+ *
+ * @param ep
+ *   ID of the bulk IN endpoint
+ */
+void main_tmc_bulk_in_received( udd_ep_status_t status,
+                                iram_size_t nb_transfered,
+                                udd_ep_id_t ep)
 {
    UNUSED(nb_transfered);
    UNUSED(ep);
-   if (UDD_EP_TRANSFER_OK != status) {
-      return; // Transfer aborted, then stop loopback
+
+   if (UDD_EP_TRANSFER_OK != status)
+   {
+      return;  // STATUS: transfer was aborted!
    }
-   ui_loop_back_state(false);
+
+   ui_loop_back_state(false); // Stop data transfer
+
    // Wait a full buffer
-   udi_tmc_bulk_out_run(
-         main_buf_loopback,
-         sizeof(main_buf_loopback),
-         main_tmc_bulk_out_received);
+   udi_tmc_bulk_out_run( adc_data_buffer, sizeof(adc_data_buffer),
+                         main_tmc_bulk_out_received );
 }
 
-void main_tmc_bulk_out_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep)
+
+//==============================================================================
+/* Process events on the bulk OUT endpoint
+ *
+ * @param status
+ *   Status of the bulk IN endpoint
+ *
+ * @param nb_transferred
+ *   Number of Bytes transferred on the endpoint
+ *
+ * @param ep
+ *   ID of the bulk OUT endpoint
+ */
+void main_tmc_bulk_out_received( udd_ep_status_t status,
+                                 iram_size_t nb_transfered,
+                                 udd_ep_id_t ep)
 {
    UNUSED(ep);
-   if (UDD_EP_TRANSFER_OK != status) {
-      return; // Transfer aborted, then stop loopback
+
+   if (UDD_EP_TRANSFER_OK != status)
+   {
+      return; // STATUS: transfer was aborted!
    }
-   ui_loop_back_state(true);
+
+   ui_loop_back_state(true);  // Enable loopback
+
    // Send on IN endpoint the data received on endpoint OUT
-   udi_tmc_bulk_in_run(
-         main_buf_loopback,
-         nb_transfered,
-         main_tmc_bulk_in_received);
+   udi_tmc_bulk_in_run( adc_data_buffer, nb_transfered,
+                        main_tmc_bulk_in_received );
 }
 #endif
 
-#if UDI_TMC_EPS_SIZE_ISO_FS
-void main_tmc_iso_in_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep)
-{
-   UNUSED(status);
-   UNUSED(nb_transfered);
-   UNUSED(ep);
-   ui_loop_back_state(false);
-}
 
-void main_tmc_iso_out_received(udd_ep_status_t status,
-      iram_size_t nb_transfered, udd_ep_id_t ep)
-{
-   uint8_t *buf_ptr;
-   UNUSED(ep);
-
-   if (UDD_EP_TRANSFER_OK != status) {
-      return; // Transfer aborted, then stop loopback
-   }
-
-   if (nb_transfered) {
-      ui_loop_back_state(true);
-      // Send on IN endpoint the data received on endpoint OUT
-      buf_ptr = &main_buf_loopback[ main_buf_iso_sel
-            *(sizeof(main_buf_loopback)/2) ];
-      udi_tmc_iso_in_run(
-            buf_ptr,
-            nb_transfered,
-            main_tmc_iso_in_received);
-   }
-
-   // Switch of buffer
-   main_buf_iso_sel = main_buf_iso_sel? 0:1;
-
-   // Immediately enable a transfer on next USB isochronous OUT packet
-   // to avoid to skip a USB packet.
-   // NOTE:
-   // Here the expected buffer size is equal to endpoint size.
-   // Thus, this transfer request will end after reception of
-   // one USB packet.
-   //
-   // When using buffer size larger than endpoint size,
-   // the requested transfer is stopped when the buffer is = full*.
-   // *on USBC and XMEGA USB driver, the buffer is full
-   // when "number of data transfered" > "buffer size" - "endpoint size".
-   buf_ptr = &main_buf_loopback[ main_buf_iso_sel
-         *(sizeof(main_buf_loopback)/2) ];
-
-   // Send on IN endpoint the data received on endpoint OUT
-   udi_tmc_iso_out_run(
-         buf_ptr,
-         udd_is_high_speed()?
-            UDI_TMC_EPS_SIZE_ISO_HS:UDI_TMC_EPS_SIZE_ISO_FS,
-         main_tmc_iso_out_received);
-}
-#endif
 
 /**
  * \mainpage ASF USB Device TMC Example

@@ -44,8 +44,8 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 
-#ifndef _USB_PROTOCOL_VENDOR_H_
-#define _USB_PROTOCOL_VENDOR_H_
+#ifndef _USB_PROTOCOL_TMCC_H_
+#define _USB_PROTOCOL_TMCC_H_
 
 /**
  * \ingroup usb_protocol_group
@@ -66,4 +66,4 @@
 
 //@}
 
-#endif // _USB_PROTOCOL_VENDOR_H_
+#endif // _USB_PROTOCOL_TMCC_H_
