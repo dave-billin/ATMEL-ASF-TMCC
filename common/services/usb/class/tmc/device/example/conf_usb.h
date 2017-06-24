@@ -120,11 +120,28 @@
  *    interrupt endpoint is optional, but is not enabled in this implementation
  * @{
  */
-//! Interface callback definition
+//! Callback function invoked when the USBTMC interface is enabled
 #define UDI_TMC_ENABLE_EXT()           main_tmc_enable()
+
+//! Callback function invoked when the USBTMC interface is disabled
 #define UDI_TMC_DISABLE_EXT()          main_tmc_disable()
-#define UDI_TMC_SETUP_OUT_RECEIVED()   main_setup_out_received()
-#define UDI_TMC_SETUP_IN_RECEIVED()    main_setup_in_received()
+
+/** \brief
+ *   Callback function invoked when the host requests that an active or pending
+ *   Bulk OUT transfer be aborted.  This callback function must send a
+ *   TMC_initiate_abort_bulk_out_response_t structure to the host indicating
+ *   the status of the request
+ */
+#define UDI_TMC_INITIATE_ABORT_BULK_OUT()   main_initiate_abort_bulk_out()
+
+/** \brief
+ *   Callback function invoked when the host asks for the status of a preceding
+ *   INITIATE_ABORT_BULK_OUT request
+ */
+#define UDI_TMC_CHECK_ABORT_BULK_OUT_STATUS()   main_check_abort_bulk_out_status()
+
+
+
 
 //! endpoints size for full speed
 //! Note: Disable the endpoints of a type, if size equal 0

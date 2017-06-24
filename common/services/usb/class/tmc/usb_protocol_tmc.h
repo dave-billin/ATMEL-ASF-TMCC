@@ -47,6 +47,8 @@
 #ifndef _USB_PROTOCOL_TMCC_H_
 #define _USB_PROTOCOL_TMCC_H_
 
+#include "compiler.h"
+
 /**
  * \ingroup usb_protocol_group
  * \defgroup usb_vendor_protocol USB Vendor Class definitions
@@ -122,7 +124,7 @@ enum TMC_control_request_ids
  * \see Table 16 in USBTMC 1.00 specification Section 4.2.1 (USBTMC requests)
  */
 //@{
-enum TMC_status_values
+typedef enum
 {
    TMC_STATUS_RESERVED_0 = 0, // Invalid reserved status
 
@@ -148,7 +150,33 @@ enum TMC_status_values
    // This status is valid if the device received a new class-specific request and
    // the device is still processing an INITIATE request
    TMC_STATUS_SPLIT_IN_PROGRESS = 0x83
-};
+
+} TMC_status_value_t;
+
+
+// Align all USB structures to 2-byte boundaries
+COMPILER_PACK_SET(1)
+
+//==============================================================================
+/** \brief
+ *   Status message sent from device to host in response to an
+ *   INITIATE_ABORT_BULK_OUT request received on the control endpoint
+ */
+typedef struct
+{
+   uint8_t usbtmc_status;  /**< Status code from TMC_status_value_t */
+
+   /// The bTag for the the current Bulk-OUT transfer. If there is no current
+   /// Bulk-OUT transfer, bTag must be set to the bTag for the most recent
+   /// bulk-OUT transfer. If no Bulk-OUT transfer has ever been started, bTag
+   /// must be 0x00
+   uint8_t bTag;
+
+} TMC_initiate_abort_bulk_out_response_t;
+
+
+COMPILER_PACK_RESET()
+
 //@}
 
 
