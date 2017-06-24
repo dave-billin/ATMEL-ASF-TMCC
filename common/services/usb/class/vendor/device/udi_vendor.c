@@ -145,7 +145,7 @@ uint8_t udi_vendor_getsetting(void)
 }
 //@}
 
-#if UDI_TMC_EPS_SIZE_INT_FS
+#if UDI_VENDOR_EPS_SIZE_INT_FS
 /**
  * \brief Start a transfer on interrupt IN
  *
@@ -159,7 +159,7 @@ uint8_t udi_vendor_getsetting(void)
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_tmc_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_vendor_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback)
 {
 	return udd_ep_run(UDI_VENDOR_EP_INTERRUPT_IN,
@@ -183,7 +183,7 @@ bool udi_tmc_interrupt_in_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_vendor_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback)
 {
 	return udd_ep_run(UDI_VENDOR_EP_INTERRUPT_OUT,
@@ -194,7 +194,7 @@ bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
 }
 #endif
 
-#if UDI_TMC_EPS_SIZE_BULK_FS
+#if UDI_VENDOR_EPS_SIZE_BULK_FS
 /**
  * \brief Start a transfer on bulk IN
  *
@@ -208,7 +208,7 @@ bool udi_tmc_interrupt_out_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_vendor_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback)
 {
 	return udd_ep_run(UDI_VENDOR_EP_BULK_IN,
@@ -232,7 +232,7 @@ bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_vendor_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback)
 {
 	return udd_ep_run(UDI_VENDOR_EP_BULK_OUT,
@@ -244,7 +244,7 @@ bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
 #endif
 
 
-#if UDI_TMC_EPS_SIZE_ISO_FS
+#if UDI_VENDOR_EPS_SIZE_ISO_FS
 /**
  * \brief Start a transfer on interrupt IN
  *
@@ -258,7 +258,7 @@ bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_tmc_iso_in_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_vendor_iso_in_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback)
 {
 	return udd_ep_run(UDI_VENDOR_EP_ISO_IN,
@@ -282,7 +282,7 @@ bool udi_tmc_iso_in_run(uint8_t * buf, iram_size_t buf_size,
  *
  * \return \c 1 if function was successfully done, otherwise \c 0.
  */
-bool udi_tmc_iso_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_vendor_iso_out_run(uint8_t * buf, iram_size_t buf_size,
 		udd_callback_trans_t callback)
 {
 	return udd_ep_run(UDI_VENDOR_EP_ISO_OUT,

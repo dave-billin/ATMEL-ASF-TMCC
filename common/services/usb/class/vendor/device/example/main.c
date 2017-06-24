@@ -62,12 +62,12 @@ static uint8_t main_buf_iso_sel;
 //@}
 
 // check configuration
-#if UDI_TMC_EPS_SIZE_ISO_FS>(MAIN_LOOPBACK_SIZE/2)
-# error UDI_TMC_EPS_SIZE_ISO_FS must be <= MAIN_LOOPBACK_SIZE/2 in cond_usb.h
+#if UDI_VENDOR_EPS_SIZE_ISO_FS>(MAIN_LOOPBACK_SIZE/2)
+# error UDI_VENDOR_EPS_SIZE_ISO_FS must be <= MAIN_LOOPBACK_SIZE/2 in cond_usb.h
 #endif
 #ifdef USB_DEVICE_HS_SUPPORT
-# if UDI_TMC_EPS_SIZE_ISO_HS>(MAIN_LOOPBACK_SIZE/2)
-#   error UDI_TMC_EPS_SIZE_ISO_HS must be <= MAIN_LOOPBACK_SIZE/2 in cond_usb.h
+# if UDI_VENDOR_EPS_SIZE_ISO_HS>(MAIN_LOOPBACK_SIZE/2)
+#   error UDI_VENDOR_EPS_SIZE_ISO_HS must be <= MAIN_LOOPBACK_SIZE/2 in cond_usb.h
 # endif
 #endif
 
@@ -132,13 +132,13 @@ bool main_vendor_enable(void)
 {
 	main_b_vendor_enable = true;
 	// Start data reception on OUT endpoints
-#if UDI_TMC_EPS_SIZE_INT_FS
+#if UDI_VENDOR_EPS_SIZE_INT_FS
 	main_vendor_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
-#if UDI_TMC_EPS_SIZE_BULK_FS
+#if UDI_VENDOR_EPS_SIZE_BULK_FS
 	main_vendor_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
-#if UDI_TMC_EPS_SIZE_ISO_FS
+#if UDI_VENDOR_EPS_SIZE_ISO_FS
 	main_buf_iso_sel=0;
 	main_vendor_iso_out_received(UDD_EP_TRANSFER_OK, 0, 0);
 #endif
@@ -170,7 +170,7 @@ bool main_setup_in_received(void)
 	return true;
 }
 
-#if UDI_TMC_EPS_SIZE_INT_FS
+#if UDI_VENDOR_EPS_SIZE_INT_FS
 void main_vendor_int_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
@@ -181,7 +181,7 @@ void main_vendor_int_in_received(udd_ep_status_t status,
 	}
 	ui_loop_back_state(false);
 	// Wait a full buffer
-	udi_tmc_interrupt_out_run(
+	udi_vendor_interrupt_out_run(
 			main_buf_loopback,
 			sizeof(main_buf_loopback),
 			main_vendor_int_out_received);
@@ -196,14 +196,14 @@ void main_vendor_int_out_received(udd_ep_status_t status,
 	}
 	ui_loop_back_state(true);
 	// Send on IN endpoint the data received on endpoint OUT
-	udi_tmc_interrupt_in_run(
+	udi_vendor_interrupt_in_run(
 			main_buf_loopback,
 			nb_transfered,
 			main_vendor_int_in_received);
 }
 #endif
 
-#if UDI_TMC_EPS_SIZE_BULK_FS
+#if UDI_VENDOR_EPS_SIZE_BULK_FS
 void main_vendor_bulk_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
@@ -214,7 +214,7 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 	}
 	ui_loop_back_state(false);
 	// Wait a full buffer
-	udi_tmc_bulk_out_run(
+	udi_vendor_bulk_out_run(
 			main_buf_loopback,
 			sizeof(main_buf_loopback),
 			main_vendor_bulk_out_received);
@@ -229,14 +229,14 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	}
 	ui_loop_back_state(true);
 	// Send on IN endpoint the data received on endpoint OUT
-	udi_tmc_bulk_in_run(
+	udi_vendor_bulk_in_run(
 			main_buf_loopback,
 			nb_transfered,
 			main_vendor_bulk_in_received);
 }
 #endif
 
-#if UDI_TMC_EPS_SIZE_ISO_FS
+#if UDI_VENDOR_EPS_SIZE_ISO_FS
 void main_vendor_iso_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
@@ -261,7 +261,7 @@ void main_vendor_iso_out_received(udd_ep_status_t status,
 		// Send on IN endpoint the data received on endpoint OUT
 		buf_ptr = &main_buf_loopback[ main_buf_iso_sel
 				*(sizeof(main_buf_loopback)/2) ];
-		udi_tmc_iso_in_run(
+		udi_vendor_iso_in_run(
 				buf_ptr,
 				nb_transfered,
 				main_vendor_iso_in_received);
@@ -285,10 +285,10 @@ void main_vendor_iso_out_received(udd_ep_status_t status,
 			*(sizeof(main_buf_loopback)/2) ];
 
 	// Send on IN endpoint the data received on endpoint OUT
-	udi_tmc_iso_out_run(
+	udi_vendor_iso_out_run(
 			buf_ptr,
 			udd_is_high_speed()?
-				UDI_TMC_EPS_SIZE_ISO_HS:UDI_TMC_EPS_SIZE_ISO_FS,
+				UDI_VENDOR_EPS_SIZE_ISO_HS:UDI_VENDOR_EPS_SIZE_ISO_FS,
 			main_vendor_iso_out_received);
 }
 #endif
