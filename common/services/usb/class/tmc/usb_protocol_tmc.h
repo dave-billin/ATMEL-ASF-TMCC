@@ -64,6 +64,92 @@
 //@}
 
 
+/**
+ * \name USBTMC Control endpoint request ID's
+ *
+ * \remarks
+ *   USBTMC-specific values that may appear in the bRequest field of control
+ *   endpoint requests.
+ *
+ * \see Table 15 in USBTMC 1.00 specification Section 4.2.1 (USBTMC requests)
+ */
+//@{
+enum TMC_control_request_ids
+{
+   // Reserved ID that should not be used
+   TMC_CTRL_REQ_RESERVED_0 = 0,
+
+   // Aborts a Bulk-OUT transfer
+   TMC_CTRL_REQ_INITIATE_ABORT_BULK_OUT = 1,
+
+   // Returns the status of the previously sent TMC_CTRL_REQ_INITIATE_ABORT_BULK_OUT request
+   TMC_CTRL_REQ_CHECK_ABORT_BULK_OUT_STATUS = 2,
+
+   // Aborts a Bulk-IN transfer
+   TMC_CTRL_REQ_INITIATE_ABORT_BULK_IN = 3,
+
+   // Returns the status of the previously sent TMC_CTRL_REQ_INITIATE_ABORT_BULK_IN request
+   TMC_CTRL_REQ_CHECK_ABORT_BULK_IN_STATUS = 4,
+
+   // Clears all previously sent pending and unprocessed Bulk-OUT USBTMC message
+   // content and clears all pending Bulk-IN transfers from the USBTMC interface
+   TMC_CTRL_REQ_INITIATE_CLEAR = 5,
+
+   // Returns the status of the previously sent TMC_CTRL_REQ_INITIATE_CLEAR request
+   TMC_CTRL_REQ_CHECK_CLEAR_STATUS = 6,
+
+   // Returns attributes and capabilities of the USBTMC interface
+   TMC_CTRL_REQ_GET_CAPABILITIES = 7,
+
+   // NOTE: ID's 8 through 63 are marked as RESERVED
+
+   // A mechanism to turn on an activity indicator for identification purposes
+   // The device indicates whether or not it supports this request in the
+   // GET_CAPABILITIES response packet
+   TMC_CTRL_REQ_INDICATOR_PULSE = 64
+};
 //@}
+
+
+/**
+ * \name USBTMC Status Values
+ *
+ * \remarks
+ *   All USBTMC class-specific requests return data to the Host (bmRequestType
+ *   direction = Device-to-host) and have a data payload that begins with a 1
+ *   byte USBTMC_status field. These USBTMC_status values are defined here.
+ *
+ * \see Table 16 in USBTMC 1.00 specification Section 4.2.1 (USBTMC requests)
+ */
+//@{
+enum TMC_status_values
+{
+   TMC_STATUS_RESERVED_0 = 0, // Invalid reserved status
+
+   // Success
+   TMC_STATUS_SUCCESS = 1,
+
+   // This status is valid if a device has received a USBTMC split transaction
+   // CHECK_STATUS request and the request is still being processed
+   TMC_STATUS_PENDING = 2,
+
+   // Failure, unspecified reason, and a more specific USBTMC_status is not defined
+   TMC_STATUS_FAILED = 0x80,
+
+   // This status is only valid if a device has received an INITIATE_ABORT_BULK_OUT
+   // or INITIATE_ABORT_BULK_IN request and the specified transfer to abort is
+   // not in progress
+   TMC_STATUS_TRANSFER_NOT_IN_PROGRESS = 0x81,
+
+   // This status is valid if the device received a CHECK_STATUS request and the
+   // device is not processing an INITIATE request
+   TMC_STATUS_SPLIT_NOT_IN_PROGRESS = 0x82,
+
+   // This status is valid if the device received a new class-specific request and
+   // the device is still processing an INITIATE request
+   TMC_STATUS_SPLIT_IN_PROGRESS = 0x83
+};
+//@}
+
 
 #endif // _USB_PROTOCOL_TMCC_H_

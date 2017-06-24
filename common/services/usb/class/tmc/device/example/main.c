@@ -89,13 +89,21 @@ void main_tmc_iso_out_received(udd_ep_status_t status,
 
 
 //==============================================================================
-static inline void main_fill_usb_buffer( uint16_t seed_value )
+static inline void main_fill_usb_buffer( void )
 {
-   int index;
-   for ( index = 0; index < TMCC_BUFFER_SIZE; ++index )
+   static char const fakeData[] = "0123456789ab";
+   static uint8_t data_offset = 0;
+
+   int index = 0;
+   while( index < TMCC_BUFFER_SIZE )
    {
-      adc_data_buffer[index] = seed_value;
+      adc_data_buffer[index] = fakeData[data_offset];
+      if ( sizeof(fakeData) == ++data_offset )
+      {
+         data_offset = 0;
+      }
    }
+
 }
 
 
@@ -157,7 +165,6 @@ void main_sof_action(void)
    if ( main_b_tmc_enable )
    {
       uint16_t frame_number = udd_get_frame_number();
-      main_fill_usb_buffer(frame_number); // Fill the data buffer
       ui_process(frame_number);  // Update the LED on the board
    }
 }
@@ -292,6 +299,9 @@ void main_tmc_bulk_in_received( udd_ep_status_t status,
    }
 
    ui_loop_back_state(false); // Stop data transfer
+
+   // Fill the data buffer with fake data
+   main_fill_usb_buffer();
 
    // Wait a full buffer
    udi_tmc_bulk_out_run( adc_data_buffer, sizeof(adc_data_buffer),
