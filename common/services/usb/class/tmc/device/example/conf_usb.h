@@ -94,17 +94,42 @@
 #define  UDC_SOF_EVENT()                  main_sof_action()
 #define  UDC_SUSPEND_EVENT()              main_suspend_action()
 #define  UDC_RESUME_EVENT()               main_resume_action()
+
 //! Mandatory when USB_DEVICE_ATTR authorizes remote wakeup feature
 // #define  UDC_REMOTEWAKEUP_ENABLE()        user_callback_remotewakeup_enable()
 // extern void user_callback_remotewakeup_enable(void);
+
 // #define  UDC_REMOTEWAKEUP_DISABLE()       user_callback_remotewakeup_disable()
 // extern void user_callback_remotewakeup_disable(void);
+
 //! When a extra string descriptor must be supported
 //! other than manufacturer, product and serial string
 // #define  UDC_GET_EXTRA_STRING()
 //@}
 
 //@}
+
+
+
+/**
+ * USBTMC Capabilities Configuration
+ * @{
+ */
+
+/// Set to 1 if device supports INDICATOR_PULSE requests; zero otherwise
+#define USBTMC_SUPPORT_INDICATOR_PULSE   0
+
+/// Set to 1 if device is talk-only (i.e. it only sends data to the host)
+#define USBTMC_IS_TALK_ONLY  1
+
+/// Set to 1 if device is listen-only (i.e. it only receives data from the host)
+#define USBTMC_IS_LISTEN_ONLY  0
+
+/// Set to 1 if device supports ending a Bulk-IN transfer from the interface
+/// when a Byte matches a specified termination character (TermChar); else zero
+#define USBTMC_SUPPORT_TERMCHAR  0
+//@}
+
 
 
 /**
@@ -116,8 +141,7 @@
  * Configuration of TMC interface
  *
  * @remarks
- *    The USB TMC Class does not utilize isochronous endpoints.  A single
- *    interrupt endpoint is optional, but is not enabled in this implementation
+ *    This USBTMC implementation does not implement an interrupt endpoint.
  * @{
  */
 //! Callback function invoked when the USBTMC interface is enabled
@@ -126,20 +150,77 @@
 //! Callback function invoked when the USBTMC interface is disabled
 #define UDI_TMC_DISABLE_EXT()          main_tmc_disable()
 
+
 /** \brief
  *   Callback function invoked when the host requests that an active or pending
- *   Bulk OUT transfer be aborted.  This callback function must send a
- *   TMC_initiate_abort_bulk_out_response_t structure to the host indicating
- *   the status of the request
+ *   Bulk-OUT transfer be aborted.
+ *
+ *  \remarks
+ *   This function must send a TMC_initiate_abort_bulk_xfer_response_t to the
+ *   host indicating the status of the request
  */
-#define UDI_TMC_INITIATE_ABORT_BULK_OUT()   main_initiate_abort_bulk_out()
+#define UDI_TMC_INITIATE_ABORT_BULK_OUT_EXT()   main_initiate_abort_bulkOUT()
 
 /** \brief
  *   Callback function invoked when the host asks for the status of a preceding
  *   INITIATE_ABORT_BULK_OUT request
+ *
+  * \remarks
+ *   This function must send a TMC_check_abort_bulkOUT_status_response_t to
+ *   the host indicating the status of the abort request
  */
-#define UDI_TMC_CHECK_ABORT_BULK_OUT_STATUS()   main_check_abort_bulk_out_status()
+#define UDI_TMC_CHECK_ABORT_BULK_OUT_STATUS_EXT()   main_check_abort_bulkOUT_status()
 
+
+/** \brief
+ *   Callback function invoked when the host requests that an active or pending
+ *   Bulk-IN transfer be aborted.
+ *
+ *  \remarks
+ *   This function must send a TMC_initiate_abort_bulk_xfer_response_t to the
+ *   host indicating the status of the request
+ */
+#define UDI_TMC_INITIATE_ABORT_BULK_IN_EXT()   main_initiate_abort_bulkIN()
+
+/** \brief
+ *   Callback function invoked when the host asks for the status of a preceding
+ *   INITIATE_ABORT_BULK_IN request
+ *
+  * \remarks
+ *   This function must send a TMC_check_abort_bulkIN_status_response_t to
+ *   the host indicating the status of the abort request
+ */
+#define UDI_TMC_CHECK_ABORT_BULK_IN_STATUS_EXT()   main_check_abort_bulkIN_status()
+
+/** \brief
+ *   Callback function invoked when the host asks for all input and output
+ *   buffers to be cleared
+ *
+ *  \remarks
+ *   This function should halt the Bulk-OUT endpoint and send a single Byte
+ *   containing a value from TMC_status_values to the host to communicate the
+ *   result of the clear operation
+ */
+#define UDI_TMC_INITIATE_CLEAR_EXT()   main_initiate_clear()
+
+/** \brief
+ *   Callback function invoked when the host sends a CHECK_CLEAR_STATUS request
+ *   to determine if all input and output buffers have been cleared
+ *
+ *  \remarks
+ *   This function must send a TMC_check_clear_status_response_t to the host to
+ *   communicate whether a preceding clear operation has completed
+ */
+#define UDI_TMC_CHECK_CLEAR_STATUS_EXT()   main_check_clear_status()
+
+/** \brief
+ *   Callback function invoked when the host sends an INDICATOR_PULSE request
+ *   to turn on an activity indicator on the device
+ *
+ *  \remarks
+ *   This function should
+ */
+#define UDI_TMC_INDICATOR_PULSE_EXT()
 
 
 

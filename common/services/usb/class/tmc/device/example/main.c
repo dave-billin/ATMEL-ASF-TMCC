@@ -45,7 +45,7 @@
  */
 
 #include <asf.h>
-#include <compiler.h>
+#include "compiler.h"
 #include "conf_usb.h"
 #include "ui.h"
 
@@ -53,7 +53,40 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-static volatile bool main_b_tmc_enable = false;
+static volatile bool g_bulkIN_xfer_active = false;
+
+//==============================================================================
+/// \brief Data structure used to track the state of a Bulk IN transfer
+typedef struct
+{
+   uint8_t bTag;     ///< bTag ID of the transfer
+   uint32_t numBytesTransferred; ///< Total number of Bytes transferred
+} BulkIN_transfer_state_t;
+
+static BulkIN_transfer_state_t g_bulkIN_state = {0};
+
+//==============================================================================
+/// Structures used to send responses for Bulk-IN/OUT abort operations
+typedef union
+{
+   /// Response to an INITIATE_CLEAR request
+   uint8_t initiate_clear;
+
+   /// Response to an INITIATE_BULK_IN/OUT_ABORT request
+   TMC_initiate_abort_bulk_xfer_response_t initiate_abort;
+
+   /// Response to a CHECK_BULK_OUT_ABORT request
+   TMC_check_abort_bulkOUT_status_response_t check_abortOUT;
+
+   /// Response to a CHECK_BULK_IN_ABORT request
+   TMC_check_abort_bulkIN_status_response_t check_abortIN;
+
+   /// Response to a CHECK_CLEAR_STATUS request
+   TMC_check_clear_status_response_t check_clear;
+
+} Bulk_abort_response_u;
+
+COMPILER_WORD_ALIGNED static Bulk_abort_response_u g_bulk_abort_response = {0};
 
 
 /// Size of the buffer used for TMCC data
@@ -74,6 +107,7 @@ COMPILER_WORD_ALIGNED static uint8_t adc_data_buffer[TMCC_BUFFER_SIZE];
 #endif
 
 // Function Prototypes
+static void abort_tmc_bulkIN_transfer(void);
 static void main_tmc_bulk_in_received(udd_ep_status_t status,
                                       iram_size_t nb_transfered, udd_ep_id_t ep);
 
@@ -84,7 +118,7 @@ static void main_tmc_bulk_out_received(udd_ep_status_t status,
 ////////////////////////////////////////////////////////////////////////////////
 bool main_tmc_enable(void)
 {
-   main_b_tmc_enable = true;
+   g_bulkIN_xfer_active = true;
    // Start data reception on OUT endpoints
 #if UDI_TMC_EPS_SIZE_INT_FS
    main_tmc_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
@@ -102,14 +136,14 @@ bool main_tmc_enable(void)
 ////////////////////////////////////////////////////////////////////////////////
 void main_tmc_disable(void)
 {
-   main_b_tmc_enable = false;
+   g_bulkIN_xfer_active = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void main_sof_action( void )
 {
    // Only process frames if enabled
-   if ( main_b_tmc_enable )
+   if ( g_bulkIN_xfer_active )
    {
       uint16_t frame_number = udd_get_frame_number();
       ui_process(frame_number);  // Update the LED on the board
@@ -129,23 +163,90 @@ void main_resume_action(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void main_initiate_abort_bulk_out(void)
+void main_initiate_abort_bulkOUT(void)
 {
+   // Bulk-OUT transfers (e.g. data transfers from host computer to USB device)
+   // are not supported by this design, so there's nothing to do when a request
+   // to abort Bulk-OUT transfers is received
 
-   static TMC_initiate_abort_bulk_out_response_t response = {0};
+   // Populate fields of the response
+   g_bulk_abort_response.initiate_abort.usbtmc_status =
+                                          TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
+   g_bulk_abort_response.initiate_abort.bTag = 0;
 
-   // TODO: Handle INITIATE_ABORT_BULK_OUT request and populate the fields
-   //       of response
-
-   udd_g_ctrlreq.payload = (uint8_t*)&response;
-   udd_g_ctrlreq.payload_size = min( udd_g_ctrlreq.req.wLength,
-                                     sizeof(TMC_initiate_abort_bulk_out_response_t) );
+   udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.initiate_abort;
+   udd_g_ctrlreq.payload_size = sizeof(TMC_initiate_abort_bulk_xfer_response_t);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool main_check_abort_bulk_out_status(void)
+void main_check_abort_bulkOUT_status(void)
 {
-   return true;
+   // Bulk-OUT transfers (e.g. data transfers from host computer to USB device)
+   // are not supported by this design, so there should never be any Bulk-OUT
+   // abort requests pending
+
+   g_bulk_abort_response.check_abortOUT.nbytes_rxd = 0;
+   g_bulk_abort_response.check_abortOUT.reserved[0] = 0;
+   g_bulk_abort_response.check_abortOUT.reserved[1] = 0;
+   g_bulk_abort_response.check_abortOUT.reserved[2] = 0;
+   g_bulk_abort_response.check_abortOUT.usbtmc_status =
+                                          TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
+
+   udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.check_abortOUT;
+   udd_g_ctrlreq.payload_size = sizeof(TMC_check_abort_bulkOUT_status_response_t);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void main_initiate_abort_bulkIN(void)
+{
+   // Populate fields of the response
+   g_bulk_abort_response.initiate_abort.usbtmc_status =
+                  g_bulkIN_xfer_active ? TMC_STATUS_SUCCESS :
+                                           TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
+   g_bulk_abort_response.initiate_abort.bTag = g_bulkIN_state.bTag;
+
+   abort_tmc_bulkIN_transfer();
+
+   udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.initiate_abort;
+   udd_g_ctrlreq.payload_size = sizeof(TMC_initiate_abort_bulk_xfer_response_t);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void main_check_abort_bulkIN_status(void)
+{
+   g_bulk_abort_response.check_abortIN.nbytes_txd =
+                                          g_bulkIN_state.numBytesTransferred;
+   g_bulk_abort_response.check_abortIN.bmAbortBulkIn = 0;
+   g_bulk_abort_response.check_abortIN.reserved[0] = 0;
+   g_bulk_abort_response.check_abortIN.reserved[1] = 0;
+   g_bulk_abort_response.check_abortIN.usbtmc_status =
+                  g_bulkIN_xfer_active ? TMC_STATUS_SUCCESS :
+                                           TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
+
+   udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.check_abortIN;
+   udd_g_ctrlreq.payload_size = sizeof(TMC_check_abort_bulkIN_status_response_t);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void main_initiate_clear(void)
+{
+   g_bulk_abort_response.initiate_clear = TMC_STATUS_SUCCESS;
+   udd_g_ctrlreq.payload = &g_bulk_abort_response.initiate_clear;
+   udd_g_ctrlreq.payload_size = sizeof(uint8_t);
+
+   // TODO: implement clearing input/output buffers
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void main_check_clear_status(void)
+{
+   // NOTE: This function doesn't presently do anything special since buffers
+   //       are cleared more or less instantaneously.
+
+   g_bulk_abort_response.check_clear.usbtmc_status = TMC_STATUS_SUCCESS;
+   g_bulk_abort_response.check_clear.bmClear = 0;
+   udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.check_clear;
+   udd_g_ctrlreq.payload_size = sizeof(TMC_check_clear_status_response_t);
 }
 
 
@@ -231,8 +332,21 @@ int main(void)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/** \brief Helper function used to abort active/pending Bulk IN transfers
+ */
+void abort_tmc_bulkIN_transfer(void)
+{
+   // TODO: this may need to get more complex later
+   g_bulkIN_xfer_active = false;
 
-//==============================================================================
+   // Tell the dev board API that we are disconnected (uses the API defined for
+   // the MattairTech MT-D11 board
+   ui_loop_back_state(false);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 /** \brief Process events on the bulk IN endpoint
  *
  * \param status
@@ -267,7 +381,7 @@ void main_tmc_bulk_in_received( udd_ep_status_t status,
 }
 
 
-//==============================================================================
+////////////////////////////////////////////////////////////////////////////////
 /** \brief Process events on the bulk OUT endpoint
  *
  * \param status

@@ -46,6 +46,7 @@
 
 #include "conf_usb.h"
 #include "usb_protocol.h"
+#include "compiler.h"
 #include "udd.h"
 #include "udc.h"
 #include "udi_tmc.h"
@@ -75,6 +76,8 @@ static bool udi_tmc_enable(void);
 static void udi_tmc_disable(void);
 static bool udi_tmc_setup(void);
 static uint8_t udi_tmc_getsetting(void);
+static void udi_send_usbtmc_capabilities(void);
+static void udi_indicator_pulse(void);
 
 //! Global structure which contains standard UDI API for UDC
 UDC_DESC_STORAGE udi_api_t udi_api_tmc =
@@ -137,6 +140,21 @@ void udi_tmc_disable(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/** Handles/dispatches an INDICATOR_PULSE request
+ */
+inline static void udi_indicator_pulse(void)
+{
+#if USBTMC_SUPPORT_INDICATOR_PULSE
+   static uint8_t result = TMC_STATUS_SUCCESS;
+   UDI_TMC_INDICATOR_PULSE_EXT();
+#else
+   static uint8_t result = TMC_STATUS_FAILED;
+#endif
+   udd_g_ctrlreq.payload = &result;
+   udd_g_ctrlreq.payload_size = sizeof(uint8_t);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 /** \brief Called when a USBTMC request is received on the Control IN endpoint
  *
  * @return true if the request was accepted; else false on error
@@ -151,42 +169,50 @@ static inline bool udi_process_tmc_control_in_request(void)
       case TMC_CTRL_REQ_INITIATE_ABORT_BULK_OUT:
       {
          // Call handler function
-         UDI_TMC_INITIATE_ABORT_BULK_OUT();
+         UDI_TMC_INITIATE_ABORT_BULK_OUT_EXT();
          break;
       }
 
       case TMC_CTRL_REQ_CHECK_ABORT_BULK_OUT_STATUS:
       {
+         // Call handler function
+         UDI_TMC_CHECK_ABORT_BULK_OUT_STATUS_EXT();
          break;
       }
 
       case TMC_CTRL_REQ_INITIATE_ABORT_BULK_IN:
       {
+         UDI_TMC_INITIATE_ABORT_BULK_IN_EXT();
          break;
       }
 
       case TMC_CTRL_REQ_CHECK_ABORT_BULK_IN_STATUS:
       {
+         UDI_TMC_CHECK_ABORT_BULK_IN_STATUS_EXT();
          break;
       }
 
       case TMC_CTRL_REQ_INITIATE_CLEAR:
       {
+         UDI_TMC_INITIATE_CLEAR_EXT();
          break;
       }
 
       case TMC_CTRL_REQ_CHECK_CLEAR_STATUS:
       {
+         UDI_TMC_CHECK_CLEAR_STATUS_EXT();
          break;
       }
 
       case TMC_CTRL_REQ_GET_CAPABILITIES:
       {
+         udi_send_usbtmc_capabilities();
          break;
       }
 
       case TMC_CTRL_REQ_INDICATOR_PULSE:
       {
+         udi_indicator_pulse();
          break;
       }
 
@@ -299,6 +325,39 @@ bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
                      buf,
                      buf_size,
                      callback);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/** Sends USBTMC capabilities to the host over the Control-IN endpoint
+ */
+void udi_send_usbtmc_capabilities()
+{
+   struct USBTMC_capabilities
+   {
+      uint8_t  usbtmc_status;  ///< Status indication for the request
+      uint8_t  reserved1;
+      uint16_t bcdUSBTMC;     ///< BCD version number of the USBTMC interface
+      uint8_t  interfaceCaps; ///< USBTMC interface capabilities
+      uint8_t  deviceCaps;    ///< USBTMC device capabilities
+      uint8_t  reserved6[18];
+
+   };
+
+   COMPILER_WORD_ALIGNED static struct USBTMC_capabilities capabilities = {
+                      TMC_STATUS_SUCCESS,    // USBTMC_status
+                      0,                     // reserved
+                      0x0100,                // bcdUSBTMC
+                      ( (USBTMC_SUPPORT_INDICATOR_PULSE << 2) ||  // indicator pulse
+                        (USBTMC_IS_TALK_ONLY << 1) ||             // talk-only
+                        (USBTMC_IS_LISTEN_ONLY << 0)              // listen-only
+                      ),
+                      (USBTMC_SUPPORT_TERMCHAR << 0),             // Bulk-IN TermChar support
+                      {0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0, 0} // Reserved Bytes
+                    };
+
+   udd_g_ctrlreq.payload = (uint8_t*)&capabilities;
+   udd_g_ctrlreq.payload_size = sizeof(struct USBTMC_capabilities);
 }
 
 //@}

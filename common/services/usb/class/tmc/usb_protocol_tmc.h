@@ -124,7 +124,7 @@ enum TMC_control_request_ids
  * \see Table 16 in USBTMC 1.00 specification Section 4.2.1 (USBTMC requests)
  */
 //@{
-typedef enum
+enum e_TMC_status_values
 {
    TMC_STATUS_RESERVED_0 = 0, // Invalid reserved status
 
@@ -151,28 +151,87 @@ typedef enum
    // the device is still processing an INITIATE request
    TMC_STATUS_SPLIT_IN_PROGRESS = 0x83
 
-} TMC_status_value_t;
+};
 
 
-// Align all USB structures to 2-byte boundaries
+// Pack all USB structures along a 1-byte boundary
 COMPILER_PACK_SET(1)
 
 //==============================================================================
 /** \brief
  *   Status message sent from device to host in response to an
- *   INITIATE_ABORT_BULK_OUT request received on the control endpoint
+ *   INITIATE_ABORT_BULK_OUT or INITIATE_ABORT_BULK_IN request received from the
+ *   host on the control OUT endpoint
  */
 typedef struct
 {
-   uint8_t usbtmc_status;  /**< Status code from TMC_status_value_t */
+   uint8_t usbtmc_status;  ///< Status code from e_TMC_status_values
 
-   /// The bTag for the the current Bulk-OUT transfer. If there is no current
-   /// Bulk-OUT transfer, bTag must be set to the bTag for the most recent
-   /// bulk-OUT transfer. If no Bulk-OUT transfer has ever been started, bTag
-   /// must be 0x00
+   /// The bTag for the the current Bulk IN/OUT transfer. If there is no current
+   /// Bulk IN/OUT transfer, bTag must be set to the bTag for the most recent
+   /// bulk IN/OUT transfer. If no Bulk IN/OUT transfer has ever been started,
+   /// bTag must be 0x00
    uint8_t bTag;
 
-} TMC_initiate_abort_bulk_out_response_t;
+} TMC_initiate_abort_bulk_xfer_response_t;
+
+
+
+//==============================================================================
+/** \brief
+ *   Status message sent from device to host in response to a
+ *   CHECK_ABORT_BULK_OUT_STATUS request received from the host on the control
+ *   OUT endpoint
+ */
+typedef struct
+{
+   uint8_t usbtmc_status;  ///< Status code from e_TMC_status_values
+   uint8_t reserved[3];    ///< Reserved field (must be set to 0x000000)
+
+   /** Total number of USBTMC message Bytes (not including Bulk-OUT Header or
+    *  alignment bytes) in the transfer received, and not discarded, by the
+    *  device.  Value is reported with least significant Byte first.
+    */
+   uint32_t nbytes_rxd;
+
+} TMC_check_abort_bulkOUT_status_response_t;
+
+
+
+//==============================================================================
+/** \brief
+ *   Status message sent from device to host in response to a
+ *   CHECK_ABORT_BULK_IN_STATUS request received from the host on the control
+ *   OUT endpoint
+ */
+typedef struct
+{
+   uint8_t usbtmc_status;  ///< Status code from e_TMC_status_values
+   uint8_t bmAbortBulkIn;  ///< 0 if Bulk-IN FIFO is empty; else 1 if data is still queued
+   uint8_t reserved[2];    ///< Reserved field (must be set to 0x000000)
+
+   /** Total number of USBTMC message Bytes (not including Bulk-IN Header or
+    *  alignment bytes) sent in the transfer.  Value is reported with least
+    *  significant Byte first.
+    */
+   uint32_t nbytes_txd;
+
+} TMC_check_abort_bulkIN_status_response_t;
+
+
+
+//==============================================================================
+/** \brief
+ *   Status message sent from device to host in response to a
+ *   CHECK_CLEAR_STATUS request received from the host on the control OUT
+ *   endpoint
+ */
+typedef struct
+{
+   uint8_t usbtmc_status;  ///< Status code from e_TMC_status_values
+   uint8_t bmClear;        ///< 0 if buffers are cleared; else 1
+
+} TMC_check_clear_status_response_t;
 
 
 COMPILER_PACK_RESET()

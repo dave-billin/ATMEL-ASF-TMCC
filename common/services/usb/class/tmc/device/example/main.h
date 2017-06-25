@@ -96,42 +96,82 @@ void main_resume_action(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
- *   Callback invoked to handle a request to abort a transfer on the bulk OUT
+ *   Callback invoked to handle a request to abort a transfer on the Bulk-OUT
  *   endpoint
  *
  * \remarks
- *   This callback function is invoked when a REQ_INITIATE_ABORT_BULK_OUT
+ *   This callback function is invoked when an INITIATE_ABORT_BULK_OUT
  *   request is received from the host on the Control OUT endpoint, requesting
- *   that an active or pending Bulk OUT transfer be aborted.  It sends a
- *   TMC_initiate_abort_bulk_out_response_t structure back to the host to
+ *   that an active or pending Bulk-OUT transfer be aborted.  It sends a
+ *   TMC_initiate_abort_bulk_xfer_response_t structure back to the host to
  *   communicate status of the abort request
  */
-void main_initiate_abort_bulk_out(void);
+void main_initiate_abort_bulkOUT(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 /*! \brief
- *   Callback invoked to handle a request to abort a transfer on the bulk OUT
+ *   Callback invoked to handle a request to abort a transfer on the Bulk-OUT
  *   endpoint
  *
  * \remarks
- *   This callback function is invoked when a REQ_INITIATE_ABORT_BULK_OUT
+ *   This callback function is invoked when a CHECK_ABORT_BULK_OUT_STATUS
  *   request is received from the host on the Control OUT endpoint, requesting
- *   that an active or pending Bulk OUT transfer be aborted.
- *
- * \retval true if request accepted
+ *   that an active or pending Bulk-OUT transfer be aborted.  It sends a
+ *   TMC_check_abort_bulkOUT_status_response_t structure back to the host to
+ *   communicate status of the abort request
  */
-bool main_check_abort_bulk_out_status(void);
-
+void main_check_abort_bulkOUT_status(void);
 
 ////////////////////////////////////////////////////////////////////////////////
-/*! \brief Manage the reception of setup request IN
+/*! \brief
+ *   Callback invoked to handle a request to abort a transfer on the Bulk-IN
+ *   endpoint
  *
  * \remarks
- *   This callback function is invoked when an event occurs on the IN
- *   (device-to-host) control endpoint
- *
- * \retval true if request accepted
+ *   This callback function is invoked when a INITIATE_ABORT_BULK_IN
+ *   request is received from the host on the Control OUT endpoint, requesting
+ *   that an active or pending Bulk-IN transfer be aborted.  It sends a
+ *   TMC_initiate_abort_bulk_xfer_response_t structure back to the host to
+ *   communicate status of the abort request
  */
-bool main_setup_in_received(void);
+void main_initiate_abort_bulkIN(void);
+
+////////////////////////////////////////////////////////////////////////////////
+/*! \brief
+ *   Callback invoked to handle a request to abort a transfer on the Bulk-IN
+ *   endpoint
+ *
+ * \remarks
+ *   This callback function is invoked when a CHECK_ABORT_BULK_IN_STATUS
+ *   request is received from the host on the Control OUT endpoint, requesting
+ *   that an active or pending Bulk-IN transfer be aborted.  It sends a
+ *   TMC_check_abort_bulkIN_status_response_t structure back to the host to
+ *   communicate status of the abort request
+ */
+void main_check_abort_bulkIN_status(void);
+
+////////////////////////////////////////////////////////////////////////////////
+/*! \brief
+ *   Callback invoked to handle a request to clear all input and output buffers
+ *
+ * \remarks
+ *   This callback function is invoked when an INITIATE_CLEAR request is
+ *   received from the host on the Control OUT endpoint, requesting.  It sends a
+ *   single Byte containing a value from TMC_status_values back to the host to
+ *   communicate status of the clear operation
+ */
+void main_initiate_clear(void);
+
+////////////////////////////////////////////////////////////////////////////////
+/*! \brief
+ *   Callback invoked to handle a CHECK_CLEAR_STATUS request sent by the host to
+ *   determine if all input and output buffers have been cleared
+ *
+ * \remarks
+ *   This callback function returns a TMC_check_clear_status_response_t
+ *   indicating the status of a preceding clear operation
+ */
+void main_check_clear_status(void);
+
 
 #endif // _MAIN_H_
