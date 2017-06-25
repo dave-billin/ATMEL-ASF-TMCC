@@ -247,17 +247,18 @@ bool udi_tmc_setup(void)
          result = udi_process_tmc_control_in_request();
       }
    }
+
+#if 0    // This implementation does not support Control-IN requests
    else if ( Udd_setup_is_out() )
    {
-      /*
       if ((setup_type == USB_REQ_TYPE_VENDOR)
             && (udd_g_ctrlreq.req.bRequest == 0)
             && (0 != udd_g_ctrlreq.req.wLength))
       {
          result = UDI_TMC_SETUP_OUT_RECEIVED();
       }
-      */
    }
+#endif
 
    return result;
 }

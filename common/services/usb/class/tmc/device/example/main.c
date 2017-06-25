@@ -370,11 +370,6 @@ void main_tmc_bulk_in_received( udd_ep_status_t status,
       return;  // STATUS: transfer was aborted!
    }
 
-   ui_loop_back_state(false); // Stop data transfer
-
-   // Fill the data buffer with fake data
-   populate_adc_data_buffer();
-
    // Wait a full buffer
    udi_tmc_bulk_out_run( adc_data_buffer, sizeof(adc_data_buffer),
                          main_tmc_bulk_out_received );

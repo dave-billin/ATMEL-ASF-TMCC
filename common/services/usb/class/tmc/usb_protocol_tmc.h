@@ -234,6 +234,218 @@ typedef struct
 } TMC_check_clear_status_response_t;
 
 
+
+
+//==============================================================================
+/// Bulk endpoint message IDs
+enum TMC_bulk_msg_ids
+{
+   // NOTE:
+   //   host-to-device messages are received on the Bulk-OUT endpoint
+   //   device-to-host messages are sent on the Bulk-IN endpoint
+
+   /// <b>Device-dependent command</b> only present in host-to-device messages
+   TMC_BULK_DEV_DEP_MSG_OUT = 1,
+
+   /// <b>Host-to-device message</b> requesting that the device send a USBTMC
+   /// response message on the Bulk-IN endpoint.
+   TMC_BULK_REQUEST_DEV_DEP_MSG_IN = 2,
+
+   /// <b>Device-to-host message</b> indicating a response to a received
+   /// REQUEST_DEV_DEP_MSG_IN command
+   TMC_BULK_DEV_DEP_MSG_IN = 2,
+
+   /// <b>Vendor-specific command:</b> only present in host-to-device messages
+   TMC_BULK_VENDOR_SPECIFIC_OUT = 126,
+
+   /// <b>Host-to-device message</b> requesting that the device send a vendor-
+   /// specific USBTMC response message on the Bulk-IN endpoint
+   TMC_BULK_REQUEST_VENDOR_SPECIFIC_IN = 127,
+
+   /// <b>Device-to-host message:</b> indicates a response to a received
+   /// REQUEST_VENDOR_SPECIFIC_IN command
+   TMC_BULK_VENDOR_SPECIFIC_IN = 127,
+};
+
+
+//==============================================================================
+/** \brief
+ *   Header common to all Bulk-OUT messages sent from the host to the device
+ *
+ *  \remarks
+ *   This header is immediately followed by message-specific data
+ */
+typedef struct
+{
+   uint8_t MsgID;       ///< Identifies the message and type
+   uint8_t bTag;        ///< Transfer identifier issued by the host
+   uint8_t bTagInverse; ///< Ones compliment of bTag
+   uint8_t reserved;    ///< Must be set to zero
+
+   // *** Message-specific data follows ***
+
+} TMC_bulkOUT_header_t;
+
+
+//==============================================================================
+/** \brief
+ *   Bulk-OUT header content for a DEV_DEP_MSG_OUT command
+ *
+ *  \remarks
+ *   This header precedes data sent from the host to the device in a
+ *   DEV_DEP_MSG_OUT command.  Message data immediately follows the header.
+ */
+typedef struct
+{
+   TMC_bulkOUT_header_t header;  ///< Common Bulk-OUT header fields
+
+   /// Total number of message data Bytes to be sent in this USB transfer
+   /// <em>not including the number of Bytes in the Bulk-OUT header or alignment
+   /// Bytes</em>.  Must be greater than zero
+   uint32_t transferSize;
+
+   /// Set to 1 if the last message data Byte in the transfer is the last Byte
+   /// of the USBTMC message; else zero if there are more Bytes to transfer
+   uint8_t bmTransferAttributes;
+
+   uint8_t reserved[3];    ///< Reserved Bytes that must be set to zero
+
+} TMC_bulkOUT_dev_dep_msg_out_header_t;
+
+
+//==============================================================================
+/** \brief
+ *   Bulk-OUT header content for a REQUEST_DEV_DEP_MSG_IN command
+ *
+ *  \remarks
+ *   This header precedes data sent from the host to the device in a
+ *   REQUEST_DEV_DEP_MSG_IN command.
+ */
+typedef struct
+{
+   TMC_bulkOUT_header_t header;  ///< Common Bulk-OUT header fields
+
+   /// Maximum number of USBTMC message data Bytes to be sent in response to the
+   /// command, <em>not including the number of Bytes in the Bulk-IN header or
+   /// alignment Bytes</em>.  Value is sent least-significant Byte first.  Must
+   /// be a value greater than zero
+   uint32_t transferSize;
+
+   /// 0x02 if the device supports TermChar and the Bulk-IN transfer sent in
+   /// response must terminate on the TermChar specified in the termChar field;
+   /// else zero
+   uint8_t bmTransferAttributes;
+
+   /// If bmTransferAttributes bit 1 is 1, then this field contains an 8-bit
+   /// value representing a termination character that must be sent as the last
+   /// Byte of a Bulk-IN response before terminating the transfer; else if the
+   /// device does not support TermChar functionality or bmTransferAttributes is
+   /// zero, then the device should ignore this field
+   uint8_t termChar;
+
+   uint8_t reserved[2];    ///< Reserved Bytes that must be set to zero
+
+} TMC_bulkOUT_request_dev_dep_msg_in_header_t;
+
+
+//==============================================================================
+/** \brief
+ *   Bulk-OUT header content for a REQUEST_VENDOR_SPECIFIC_IN command
+ *
+ *  \remarks
+ *   This header precedes data sent from the host to the device in a
+ *   REQUEST_VENDOR_SPECIFIC_IN command.
+ */
+typedef struct
+{
+   TMC_bulkOUT_header_t header;  ///< Common Bulk-OUT header fields
+
+   /// Maximum number of USBTMC message data Bytes to be sent in response to the
+   /// command, <em>not including the number of Bytes in the Bulk-IN header or
+   /// alignment Bytes</em>.  Value is sent least-significant Byte first.  Must
+   /// be a value greater than zero
+   uint32_t transferSize;
+
+   uint32_t reserved;    ///< Reserved Bytes that must be set to zero
+
+} TMC_bulkOUT_request_vendor_specific_in_header_t;
+
+
+
+
+//==============================================================================
+/** \brief
+ *   Header common to all Bulk-IN messages sent from the device to the host
+ *
+ *  \remarks
+ *   This header is immediately followed by message-specific data
+ */
+typedef struct
+{
+   uint8_t MsgID;       ///< msgID from the command precipitating the response
+   uint8_t bTag;        ///< bTag from the command precipitating the response
+   uint8_t bTagInverse; ///< bTagInverse from the command causing the response
+   uint8_t reserved;    ///< Must be set to zero
+
+   // *** Message-specific data follows ***
+
+} TMC_bulkIN_header_t;
+
+
+//==============================================================================
+/** \brief
+ *   Bulk-IN header content for a DEV_DEP_MSG_IN response message
+ *
+ *  \remarks
+ *   This header precedes data sent from device to host in a DEV_DEP_MSG_IN
+ *   response
+ */
+typedef struct
+{
+   TMC_bulkIN_header_t header;  ///< Common Bulk-IN header fields
+
+   /// Maximum number of USBTMC message data Bytes to be sent in this transfer
+   /// <em>not including the number of Bytes in this header or alignment
+   /// Bytes</em>.  Value is sent least-significant Byte first.  Must be a value
+   /// greater than zero
+   uint32_t transferSize;
+
+   /// <b>Bit 0:</b> Set to 1 if the last message data Byte in the transfer is
+   /// the last Byte of the USBTMC message.  <b>Bit 1:</b> Set to 1 if this
+   /// transfer ends with the TermChar specified in the original command.
+   uint8_t bmTransferAttributes;
+
+   uint8_t reserved[3];    ///< Reserved Bytes that must be set to zero
+
+   // *** Message data follows ***
+
+} TMC_bulkIN_dev_dep_msg_in_header_t;
+
+
+//==============================================================================
+/** \brief
+ *   Bulk-IN header content for a VENDOR_SPECIFIC_IN response message
+ *
+ *  \remarks
+ *   This header precedes data sent from device to host in a VENDOR_SPECIFIC_IN
+ *   response
+ */
+typedef struct
+{
+   TMC_bulkIN_header_t header;  ///< Common Bulk-IN header fields
+
+   /// Maximum number of USBTMC message data Bytes to be sent in this transfer
+   /// <em>not including the number of Bytes in this header or alignment
+   /// Bytes</em>.  Value is sent least-significant Byte first.  Must be a value
+   /// greater than zero
+   uint32_t transferSize;
+
+   uint32_t reserved;    ///< Reserved Bytes that must be set to zero
+
+   // *** Message data follows ***
+
+} TMC_bulkIN_vendor_specific_in_header_t;
+
 COMPILER_PACK_RESET()
 
 //@}
