@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief USB Vendor class interface.
+ * \brief USB TMCC class interface.
  *
  * Copyright (c) 2011-2015 Atmel Corporation. All rights reserved.
  *
@@ -54,7 +54,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <assert.h>
 
 // Configuration check
 #ifndef UDI_TMC_ENABLE_EXT
@@ -65,8 +64,8 @@
 #endif
 
 /**
- * \ingroup udi_vendor_group
- * \defgroup udi_vendor_group_udc Interface with USB Device Core (UDC)
+ * \ingroup udi_tmc_group
+ * \defgroup udi_tmc_group_udc Interface with USB Device Core (UDC)
  *
  * Structures and functions required by UDC.
  *
@@ -76,8 +75,14 @@ static bool udi_tmc_enable(void);
 static void udi_tmc_disable(void);
 static bool udi_tmc_setup(void);
 static uint8_t udi_tmc_getsetting(void);
+static void udi_process_bulkOUT_header( udd_ep_status_t status,
+                                        iram_size_t numBytes,
+                                        udd_ep_id_t endpointId );
 static void udi_send_usbtmc_capabilities(void);
 static void udi_indicator_pulse(void);
+static void udi_req_dev_dep_msg_in_header_rx(udd_ep_id_t endpointId,
+                    TMC_bulkOUT_request_dev_dep_msg_in_header_t const* header);
+static void udi_signal_bulkOUT_error(void);
 
 //! Global structure which contains standard UDI API for UDC
 UDC_DESC_STORAGE udi_api_t udi_api_tmc =
@@ -92,8 +97,8 @@ UDC_DESC_STORAGE udi_api_t udi_api_tmc =
 
 
 /**
- * \ingroup udi_vendor_group
- * \defgroup udi_vendor_group_internal Implementation of UDI Vendor Class
+ * \ingroup udi_tmc_group
+ * \defgroup udi_tmc_group_internal Implementation of UDI TMCC Class
  *
  * Class internal implementation
  * @{
@@ -101,6 +106,30 @@ UDC_DESC_STORAGE udi_api_t udi_api_tmc =
 
 //! USB descriptor alternate setting used
 static uint8_t udi_tmc_alternate_setting = 0;
+
+
+//! Buffer used to receive messages from the host via the BulkOUT endpoint
+typedef union
+{
+   /// BulkOUT header only
+   TMC_bulkOUT_header_t header;
+
+   /// Header preceding device-dependent data (data follows)
+   TMC_bulkOUT_dev_dep_msg_out_header_t dev_dep_msg_out;
+
+   /// Header used to request that device-dependent data message be sent to
+   /// the host via the BulkIN endpoint
+   TMC_bulkOUT_request_dev_dep_msg_in_header_t req_dev_dep_msg;
+
+   /// Header used to request that a vendor-specific data message be sent to
+   /// the host via the BulkIN endpoint
+   TMC_bulkOUT_request_vendor_specific_in_header_t req_vendor_msg;
+
+} bulkOUTmsgHeader_t;
+
+bulkOUTmsgHeader_t bulkOUTmsgHeader;
+
+
 
 /**
  * \name Internal routines
@@ -114,17 +143,8 @@ static uint8_t udi_tmc_alternate_setting = 0;
  */
 bool udi_tmc_enable(void)
 {
-   udi_tmc_alternate_setting = udc_get_interface_desc()->bAlternateSetting;
-   if (1 == udi_tmc_alternate_setting)
-   {
-      // Call application callback
-      // to notify that interface is enabled
-      if (!UDI_TMC_ENABLE_EXT())
-      {
-         return false;
-      }
-   }
-   return true;
+   // Call application callback to notify that interface is enabled
+   return UDI_TMC_ENABLE_EXT() ? true : false;
 }
 
 
@@ -133,10 +153,7 @@ bool udi_tmc_enable(void)
  */
 void udi_tmc_disable(void)
 {
-   if (1 == udi_tmc_alternate_setting)
-   {
-      UDI_TMC_DISABLE_EXT();
-   }
+   UDI_TMC_DISABLE_EXT();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -195,6 +212,7 @@ static inline bool udi_process_tmc_control_in_request(void)
       case TMC_CTRL_REQ_INITIATE_CLEAR:
       {
          UDI_TMC_INITIATE_CLEAR_EXT();
+         udd_ep_clear_halt(UDI_TMC_EP_BULK_IN); // Clear HALT condition
          break;
       }
 
@@ -218,7 +236,7 @@ static inline bool udi_process_tmc_control_in_request(void)
 
       default:
       {
-         // Hitting this assert means an unrecognized USBTMC control
+         // Hitting this case means an unrecognized USBTMC control
          // request ID was received.  This should never happen, and ,most
          // likely indicates a programming error somewhere
          result = false;
@@ -317,16 +335,66 @@ bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
  * \param callback      NULL or function to call at the end of transfer
  *
  * \return 1 on success; else 0
+ *
+ * \remarks
+ *   This function pulls double-duty in the USBTMC sources.  It is called to
+ *   target a specific destination buffer and callback function in numerous
+ *   places.  When called with a NULL callback function, it restarts the default
+ *   processing of messages on the BulkOUT endpoint
  */
-bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
+bool udi_tmc_bulk_out_run(uint8_t* buf, iram_size_t buf_size,
                           udd_callback_trans_t callback)
 {
-   return udd_ep_run(UDI_TMC_EP_BULK_OUT,
-                     false,
-                     buf,
-                     buf_size,
-                     callback);
+   if ( NULL == callback )
+   {
+      buf = (uint8_t*)&bulkOUTmsgHeader;
+      buf_size = sizeof(bulkOUTmsgHeader_t);
+      callback = udi_process_bulkOUT_header;
+   }
+
+   // Receive up to a specified number of data Bytes from the BulkOUT endpoint
+   // and invoke a callback function when finished
+   return udd_ep_run(UDI_TMC_EP_BULK_OUT, false, buf, buf_size, callback);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+/** Callback function invoked when a TMCC BulkOut header is received
+ *
+ * \remarks
+ *    The received TMCC header is found in bulkOUT_rxBuffer
+ *
+ * \param status
+ *    UDD_EP_TRANSFER_OK, if transfer finish; else UDD_EP_TRANSFER_ABORT, if
+ *    transfer aborted
+ *
+ * \param numBytes  number of data Bytes received
+ *
+ * \param endPointID  ID of the BulkOUT endpoint the header was received on
+ */
+void udi_process_bulkOUT_header( udd_ep_status_t status, iram_size_t numBytes,
+                                 udd_ep_id_t endpointId )
+{
+   if ( UDD_EP_TRANSFER_OK == status )
+   {
+      switch (bulkOUTmsgHeader.header.MsgID)
+      {
+         case TMC_BULKOUT_REQUEST_DEV_DEP_MSG_IN:
+         {
+            udi_req_dev_dep_msg_in_header_rx(endpointId,
+                                             &bulkOUTmsgHeader.req_dev_dep_msg);
+            break;
+         }
+
+         default:
+         {
+            udd_ep_abort(endpointId);
+            return;
+            break;
+         }
+      }
+   }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /** Sends USBTMC capabilities to the host over the Control-IN endpoint
@@ -361,4 +429,36 @@ void udi_send_usbtmc_capabilities()
    udd_g_ctrlreq.payload_size = sizeof(struct USBTMC_capabilities);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+/** Callback function invoked when a complete REQ_DEP_MSG_IN header has been
+ *  received in bulkOUTmsgHeader
+ *
+ * \param status  Endpoint status
+ * \param numBytes  Number of Bytes received on the endpoint
+ * \param endpointId ID of the bulkOUT endpoint where the header was received
+ */
+void udi_req_dev_dep_msg_in_header_rx(udd_ep_id_t endpointId,
+                    TMC_bulkOUT_request_dev_dep_msg_in_header_t const* header)
+{
+   (void)endpointId;
+
+   // We don't support the termChar mechanism
+   if (0 == header->bmTransferAttributes)
+   {
+      if ( ! UDI_TMC_DEVICE_DEPENDENT_DATA_RX_EXT(header) )
+      {
+         udi_signal_bulkOUT_error();
+      }
+   }
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+void udi_signal_bulkOUT_error(void)
+{
+   // TODO: Halt the BulkOUT endpoint to signal an error
+   udd_ep_set_halt(UDI_TMC_EP_BULK_OUT);
+}
 //@}

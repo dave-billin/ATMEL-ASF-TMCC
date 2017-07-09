@@ -47,23 +47,19 @@
 #include <asf.h>
 #include "compiler.h"
 #include "conf_usb.h"
+#include "usb_protocol_tmc.h"
 #include "ui.h"
-
+#include "adc_driver.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
+
+
+/// Maximum number of data Bytes to send to the host at a time
+#define DEVICE_DATA_BUFFER_SIZE   255
+
 static volatile bool g_bulkIN_xfer_active = false;
-
-//==============================================================================
-/// \brief Data structure used to track the state of a Bulk IN transfer
-typedef struct
-{
-   uint8_t bTag;     ///< bTag ID of the transfer
-   uint32_t numBytesTransferred; ///< Total number of Bytes transferred
-} BulkIN_transfer_state_t;
-
-static BulkIN_transfer_state_t g_bulkIN_state = {0};
 
 //==============================================================================
 /// Structures used to send responses for Bulk-IN/OUT abort operations
@@ -86,50 +82,70 @@ typedef union
 
 } Bulk_abort_response_u;
 
+
+//==============================================================================
+/// \brief Data structure used to track the state of a Bulk IN transfer
+typedef struct
+{
+   uint8_t bTag;     ///< bTag ID of the transfer
+   uint32_t numBytesRemaining;   ///< Number of Bytes left to report
+   uint32_t numBytesTransferred; ///< Number of Bytes transferred so far
+} DeviceDataRequest_t;
+
+
+
+COMPILER_PACK_SET(1)
+/// Structure used to send data the host in a DEV_DEP_MSG_IN message
+typedef struct
+{
+   /// Message header
+   TMC_bulkIN_dev_dep_msg_in_header_t header;
+
+   uint8_t data[DEVICE_DATA_BUFFER_SIZE];
+} DeviceDataResponse_t;
+COMPILER_PACK_RESET()
+
+
 COMPILER_WORD_ALIGNED static Bulk_abort_response_u g_bulk_abort_response = {0};
 
-
-/// Size of the buffer used for TMCC data
-#define  TMCC_BUFFER_SIZE    1024
+/// Values used to track the active data request
+static DeviceDataRequest_t activeDataRequest = {0};
 
 /// Buffer used for TMCC data
-COMPILER_WORD_ALIGNED static uint8_t adc_data_buffer[TMCC_BUFFER_SIZE];
+COMPILER_WORD_ALIGNED static DeviceDataResponse_t deviceDataResponse;
 //@}
 
-// check configuration
-#if UDI_TMC_EPS_SIZE_ISO_FS>(TMCC_BUFFER_SIZE/2)
-# error UDI_TMC_EPS_SIZE_ISO_FS must be <= TMCC_BUFFER_SIZE/2 in cond_usb.h
-#endif
-#ifdef USB_DEVICE_HS_SUPPORT
-# if UDI_TMC_EPS_SIZE_ISO_HS>(TMCC_BUFFER_SIZE/2)
-#   error UDI_TMC_EPS_SIZE_ISO_HS must be <= TMCC_BUFFER_SIZE/2 in cond_usb.h
-# endif
-#endif
 
 // Function Prototypes
 static void abort_tmc_bulkIN_transfer(void);
-static void main_tmc_bulk_in_received(udd_ep_status_t status,
-                                      iram_size_t nb_transfered, udd_ep_id_t ep);
+static void main_req_dev_dep_msg_in_sent( udd_ep_status_t status,
+                                          iram_size_t nb_transfered,
+                                          udd_ep_id_t ep );
 
-static void main_tmc_bulk_out_received(udd_ep_status_t status,
-                                       iram_size_t nb_transfered, udd_ep_id_t ep);
+////////////////////////////////////////////////////////////////////////////////
+/// \brief Helper function used to write a uint32 value to a 32-bit field least-
+///        significant Byte first
+///
+/// \param source  Value to write
+/// \param dest    Field to receive source with least-significant Byte first
+inline static void write_uint32_lsb_first( uint32_t source, uint32_t* dest )
+{
+   uint8_t* buffer = (uint8_t*)dest;
+   buffer[0] = (uint8_t)(source);
+   buffer[1] = (uint8_t)(source >>  8);
+   buffer[2] = (uint8_t)(source >> 16);
+   buffer[3] = (uint8_t)(source >> 24);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 bool main_tmc_enable(void)
 {
    g_bulkIN_xfer_active = true;
+
    // Start data reception on OUT endpoints
-#if UDI_TMC_EPS_SIZE_INT_FS
-   main_tmc_int_in_received(UDD_EP_TRANSFER_OK, 0, 0);
-#endif
-#if UDI_TMC_EPS_SIZE_BULK_FS
-   main_tmc_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
-#endif
-#if UDI_TMC_EPS_SIZE_ISO_FS
-   main_buf_iso_sel=0;
-   main_tmc_iso_out_received(UDD_EP_TRANSFER_OK, 0, 0);
-#endif
+   UDI_TMC_RECEIVE_BULKOUT_COMMAND();
+
    return true;
 }
 
@@ -203,7 +219,7 @@ void main_initiate_abort_bulkIN(void)
    g_bulk_abort_response.initiate_abort.usbtmc_status =
                   g_bulkIN_xfer_active ? TMC_STATUS_SUCCESS :
                                            TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
-   g_bulk_abort_response.initiate_abort.bTag = g_bulkIN_state.bTag;
+   g_bulk_abort_response.initiate_abort.bTag = activeDataRequest.bTag;
 
    abort_tmc_bulkIN_transfer();
 
@@ -215,7 +231,7 @@ void main_initiate_abort_bulkIN(void)
 void main_check_abort_bulkIN_status(void)
 {
    g_bulk_abort_response.check_abortIN.nbytes_txd =
-                                          g_bulkIN_state.numBytesTransferred;
+                                       activeDataRequest.numBytesTransferred;
    g_bulk_abort_response.check_abortIN.bmAbortBulkIn = 0;
    g_bulk_abort_response.check_abortIN.reserved[0] = 0;
    g_bulk_abort_response.check_abortIN.reserved[1] = 0;
@@ -247,53 +263,6 @@ void main_check_clear_status(void)
    g_bulk_abort_response.check_clear.bmClear = 0;
    udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.check_clear;
    udd_g_ctrlreq.payload_size = sizeof(TMC_check_clear_status_response_t);
-}
-
-
-#if 0
-bool main_setup_out_received(void)
-{
-   // Tell the dev board API that we are connected (uses the API defined for
-   // the MattairTech MT-D11 board
-   ui_loop_back_state(true);
-
-   udd_g_ctrlreq.payload = adc_data_buffer;
-   udd_g_ctrlreq.payload_size = min( udd_g_ctrlreq.req.wLength,
-                                     sizeof(adc_data_buffer) );
-   return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-bool main_setup_in_received(void)
-{
-   // Tell the dev board API that we are disconnected (uses the API defined for
-   // the MattairTech MT-D11 board
-   ui_loop_back_state(false);
-
-   udd_g_ctrlreq.payload = adc_data_buffer;
-   udd_g_ctrlreq.payload_size = min( udd_g_ctrlreq.req.wLength,
-                                     sizeof(adc_data_buffer) );
-   return true;
-}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-/** \brief Helper function used to fill a buffer with fake data
- */
-static inline void populate_adc_data_buffer( void )
-{
-   static char const fakeData[] = "0123456789ab";
-   static uint8_t data_offset = 0;
-
-   int index = 0;
-   while( index < TMCC_BUFFER_SIZE )
-   {
-      adc_data_buffer[index] = fakeData[data_offset];
-      if ( sizeof(fakeData) == ++data_offset )
-      {
-         data_offset = 0;
-      }
-   }
 }
 
 
@@ -347,66 +316,78 @@ void abort_tmc_bulkIN_transfer(void)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/** \brief Process events on the bulk IN endpoint
- *
- * \param status
- *   Status of the bulk IN endpoint
- *
- * \param nb_transferred
- *   Number of Bytes transferred on the endpoint
- *
- * \param ep
- *   ID of the bulk IN endpoint
- */
-void main_tmc_bulk_in_received( udd_ep_status_t status,
-                                iram_size_t nb_transfered,
-                                udd_ep_id_t ep)
+bool main_req_dev_dep_msg_in_received(
+                     TMC_bulkOUT_request_dev_dep_msg_in_header_t const* header )
 {
-   UNUSED(nb_transfered);
-   UNUSED(ep);
+   TMC_bulkIN_dev_dep_msg_in_header_t* responseHeader =
+                                                   &deviceDataResponse.header;
+   TMC_bulkIN_header_t* bulkInHeader = &responseHeader->header;
+   uint32_t numBytesTransferred;
 
-   if (UDD_EP_TRANSFER_OK != status)
+   ui_ledOn();    // Light the LED
+
+   // If a transfer is not currently active, start a new one
+   if ( activeDataRequest.bTag != header->header.bTag )
    {
-      return;  // STATUS: transfer was aborted!
+      activeDataRequest.bTag = header->header.bTag;
+      activeDataRequest.numBytesRemaining = header->transferSize;
+      activeDataRequest.numBytesTransferred = 0;
    }
 
-   // Wait a full buffer
-   udi_tmc_bulk_out_run( adc_data_buffer, sizeof(adc_data_buffer),
-                         main_tmc_bulk_out_received );
+   // Determine if there is data to transfer
+   if ( 0 == activeDataRequest.numBytesRemaining )
+   {
+      // STATUS:
+      //   A request is active, but all requested data Bytes have been
+      //   transferred.  This should never happen, and it indicates the host
+      //   driver may not be well-behaved.  Return false to signal an error.
+      return false;
+   }
+
+   // Copy sample data into the message
+   // TODO: handle the case where no sample data is available yet
+   numBytesTransferred = adc_readSamples( deviceDataResponse.data,
+                                     min(activeDataRequest.numBytesRemaining,
+                                         DEVICE_DATA_BUFFER_SIZE) );
+
+   //-------------------------------------------------
+   // Set up the response BulkIN header
+   //-------------------------------------------------
+   bulkInHeader->MsgID = TMC_BULKIN_DEV_DEP_MSG_IN;
+   bulkInHeader->bTag = activeDataRequest.bTag;
+   bulkInHeader->bTagInverse = ~activeDataRequest.bTag;
+   bulkInHeader->reserved = 0;
+
+   //-------------------------------------------------
+   // Set up device-dependent data response header
+   //-------------------------------------------------
+   responseHeader->transferSize = numBytesTransferred;
+
+   // Set bit zero (EOM) if no Bytes remain in the transfer
+   responseHeader->bmTransferAttributes =
+                        (activeDataRequest.numBytesRemaining > 0) ? 0 : 1;
+   responseHeader->reserved[0] = 0;
+   responseHeader->reserved[2] = 0;
+   responseHeader->reserved[3] = 0;
+
+   // Update request state
+   activeDataRequest.numBytesRemaining -= numBytesTransferred;
+   activeDataRequest.numBytesTransferred += numBytesTransferred;
+
+   // Send the response
+   return 1 == udi_tmc_bulk_in_run( (uint8_t*)&deviceDataResponse,
+            (sizeof(TMC_bulkIN_dev_dep_msg_in_header_t) + numBytesTransferred),
+            main_req_dev_dep_msg_in_sent );
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/** \brief Process events on the bulk OUT endpoint
- *
- * \param status
- *   Status of the bulk IN endpoint
- *
- * \param nb_transferred
- *   Number of Bytes transferred on the endpoint
- *
- * \param ep
- *   ID of the bulk OUT endpoint
- */
-void main_tmc_bulk_out_received( udd_ep_status_t status,
-                                 iram_size_t nb_transfered,
-                                 udd_ep_id_t ep)
+void main_req_dev_dep_msg_in_sent( udd_ep_status_t status,
+                                   iram_size_t nb_transfered, udd_ep_id_t ep )
 {
-   UNUSED(ep);
-
-   if (UDD_EP_TRANSFER_OK != status)
-   {
-      return; // STATUS: transfer was aborted!
-   }
-
-   ui_loop_back_state(true);  // Enable loopback
-
-   // Send on IN endpoint the data received on endpoint OUT
-   udi_tmc_bulk_in_run( adc_data_buffer, nb_transfered,
-                        main_tmc_bulk_in_received );
+   ui_ledOff();    // Extinguish the LED
+   UDI_TMC_RECEIVE_BULKOUT_COMMAND();  // Receive the next command
 }
-
-
 
 /**
  * \mainpage ASF USB Device TMC Example

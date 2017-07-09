@@ -219,6 +219,15 @@ bool udi_tmc_bulk_in_run(uint8_t * buf, iram_size_t buf_size,
  */
 bool udi_tmc_bulk_out_run(uint8_t * buf, iram_size_t buf_size,
                           udd_callback_trans_t callback);
+
+/** \brief Receive and parse the next command sent by the host to the BulkOUT
+ *         endpoint
+ *
+ * \return \c 1 if function was successfully done, otherwise \c 0.
+ */
+#define UDI_TMC_RECEIVE_BULKOUT_COMMAND() udi_tmc_bulk_out_run(NULL, 0, NULL);
+
+
 #endif
 
 

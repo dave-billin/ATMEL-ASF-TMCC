@@ -245,26 +245,26 @@ enum TMC_bulk_msg_ids
    //   device-to-host messages are sent on the Bulk-IN endpoint
 
    /// <b>Device-dependent command</b> only present in host-to-device messages
-   TMC_BULK_DEV_DEP_MSG_OUT = 1,
+   TMC_BULKOUT_DEV_DEP_MSG_OUT = 1,
 
    /// <b>Host-to-device message</b> requesting that the device send a USBTMC
    /// response message on the Bulk-IN endpoint.
-   TMC_BULK_REQUEST_DEV_DEP_MSG_IN = 2,
+   TMC_BULKOUT_REQUEST_DEV_DEP_MSG_IN = 2,
 
    /// <b>Device-to-host message</b> indicating a response to a received
    /// REQUEST_DEV_DEP_MSG_IN command
-   TMC_BULK_DEV_DEP_MSG_IN = 2,
+   TMC_BULKIN_DEV_DEP_MSG_IN = 2,
 
    /// <b>Vendor-specific command:</b> only present in host-to-device messages
-   TMC_BULK_VENDOR_SPECIFIC_OUT = 126,
+   TMC_BULKOUT_VENDOR_SPECIFIC_OUT = 126,
 
    /// <b>Host-to-device message</b> requesting that the device send a vendor-
    /// specific USBTMC response message on the Bulk-IN endpoint
-   TMC_BULK_REQUEST_VENDOR_SPECIFIC_IN = 127,
+   TMC_BULKOUT_REQUEST_VENDOR_SPECIFIC_IN = 127,
 
    /// <b>Device-to-host message:</b> indicates a response to a received
    /// REQUEST_VENDOR_SPECIFIC_IN command
-   TMC_BULK_VENDOR_SPECIFIC_IN = 127,
+   TMC_BULKIN_VENDOR_SPECIFIC_IN = 127,
 };
 
 
@@ -350,10 +350,33 @@ typedef struct
 
 //==============================================================================
 /** \brief
- *   Bulk-OUT header content for a REQUEST_VENDOR_SPECIFIC_IN command
+ *   Bulk-OUT header content for a VENDOR_SPECIFIC_OUT command
  *
  *  \remarks
  *   This header precedes data sent from the host to the device in a
+ *   VENDOR_SPECIFIC_IN command.
+ */
+typedef struct
+{
+   TMC_bulkOUT_header_t header;  ///< Common Bulk-OUT header fields
+
+   /// Maximum number of USBTMC message data Bytes to be sent in response to the
+   /// command, <em>not including the number of Bytes in the Bulk-IN header or
+   /// alignment Bytes</em>.  Value is sent least-significant Byte first.  Must
+   /// be a value greater than zero
+   uint32_t transferSize;
+
+   uint32_t reserved;    ///< Reserved Bytes that must be set to zero
+
+} TMC_bulkOUT_vendor_specific_out_header_t;
+
+
+//==============================================================================
+/** \brief
+ *   Bulk-OUT header content for a REQUEST_VENDOR_SPECIFIC_IN command
+ *
+ *  \remarks
+ *   This header is sent from the host to the device in a
  *   REQUEST_VENDOR_SPECIFIC_IN command.
  */
 typedef struct

@@ -173,5 +173,16 @@ void main_initiate_clear(void);
  */
 void main_check_clear_status(void);
 
+////////////////////////////////////////////////////////////////////////////////
+/*! \brief
+ *   Callback function invoked when the host sends a REQ_DEV_DEP_MSG_IN message
+ *   requesting that device-dependent data be sent to the BulkIN endpoint
+ *
+ *  \param header  Header of the REQ_DEV_DEP_MSG_IN message preceding the data
+ *
+ *  \return true if the request was processed; else false in case of an error
+ */
+bool main_req_dev_dep_msg_in_received(
+                   TMC_bulkOUT_request_dev_dep_msg_in_header_t const* header );
 
 #endif // _MAIN_H_

@@ -53,6 +53,12 @@ void ui_init(void);
 //! \brief Enters the user interface in power down mode
 void ui_powerdown(void);
 
+//! \brief Turns the board LED on
+void ui_ledOn(void);
+
+//! \brief Turns the board LED off
+void ui_ledOff(void);
+
 //! \brief Exits the user interface of power down mode
 void ui_wakeup(void);
 

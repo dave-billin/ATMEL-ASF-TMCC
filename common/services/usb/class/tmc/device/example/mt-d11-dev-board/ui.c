@@ -51,38 +51,48 @@ static volatile bool ui_b_loopback = true;
 
 void ui_init(void)
 {
-	// Initialize LEDs
-	LED_On(LED_0_PIN);
+   // Initialize LEDs
+   LED_On(LED_0_PIN);
 }
 
 void ui_powerdown(void)
 {
-	LED_Off(LED_0_PIN);
+   LED_Off(LED_0_PIN);
+}
+
+void ui_ledOn(void)
+{
+   LED_On(LED_0_PIN);
+}
+
+void ui_ledOff(void)
+{
+   LED_Off(LED_0_PIN);
 }
 
 void ui_wakeup(void)
 {
-	LED_On(LED_0_PIN);
+   LED_On(LED_0_PIN);
 }
 
 void ui_loop_back_state(bool b_started)
 {
-	ui_b_loopback = b_started;
+   ui_b_loopback = b_started;
 }
 
 void ui_process(uint16_t framenumber)
 {
-	if (ui_b_loopback) {
-		LED_On(LED_0_PIN);
-		return;
-	}
+   if (ui_b_loopback) {
+      LED_On(LED_0_PIN);
+      return;
+   }
 
-	if ((framenumber % 1000) == 0) {
-		LED_On(LED_0_PIN);
-	}
-	if ((framenumber % 1000) == 500) {
-		LED_Off(LED_0_PIN);
-	}
+   if ((framenumber % 1000) == 0) {
+      LED_On(LED_0_PIN);
+   }
+   if ((framenumber % 1000) == 500) {
+      LED_Off(LED_0_PIN);
+   }
 }
 
 /**

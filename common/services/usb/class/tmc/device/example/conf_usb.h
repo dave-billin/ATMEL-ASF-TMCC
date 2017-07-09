@@ -216,13 +216,25 @@
 /** \brief
  *   Callback function invoked when the host sends an INDICATOR_PULSE request
  *   to turn on an activity indicator on the device
- *
- *  \remarks
- *   This function should
  */
 #define UDI_TMC_INDICATOR_PULSE_EXT()
 
 
+/** \brief
+ *   Callback function invoked when the host sends a REQ_DEV_DEP_MSG_IN message
+ *
+ *  \remarks
+ *   Handler function signature must be:
+ *   \code
+ *   bool handler(TMC_bulkOUT_request_dev_dep_msg_in_header_t* header)
+ *   \endcode
+ *
+ *  \remarks
+ *  The handler function must return true if the request is processed
+ *  successfully; else false on error
+ */
+#define UDI_TMC_DEVICE_DEPENDENT_DATA_RX_EXT( _header ) \
+                        main_req_dev_dep_msg_in_received(_header)
 
 //! endpoints size for full speed
 //! Note: Disable the endpoints of a type, if size equal 0

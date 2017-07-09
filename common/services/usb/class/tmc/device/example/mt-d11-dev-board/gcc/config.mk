@@ -54,6 +54,7 @@ TARGET_SRAM = tmcc_mtd11_sram.elf
 CSRCS = \
        common/services/sleepmgr/samd/sleepmgr.c           \
        common/services/usb/class/tmc/device/example/main.c \
+       common/services/usb/class/tmc/device/example/adc_driver.c \
        common/services/usb/class/tmc/device/example/mt-d11-dev-board/ui.c \
        common/services/usb/class/tmc/device/udi_tmc.c \
        common/services/usb/class/tmc/device/udi_tmc_desc.c \
