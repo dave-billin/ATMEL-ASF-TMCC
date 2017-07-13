@@ -92,7 +92,8 @@ typedef struct
    uint32_t numBytesTransferred; ///< Number of Bytes transferred so far
 } DeviceDataRequest_t;
 
-
+/// Placeholder value for the bTag field of a DeviceDataRequest_t
+#define INVALID_bTag    (uint8_t)0
 
 COMPILER_PACK_SET(1)
 /// Structure used to send data the host in a DEV_DEP_MSG_IN message
@@ -109,7 +110,10 @@ COMPILER_PACK_RESET()
 COMPILER_WORD_ALIGNED static Bulk_abort_response_u g_bulk_abort_response = {0};
 
 /// Values used to track the active data request
-static DeviceDataRequest_t activeDataRequest = {0};
+static DeviceDataRequest_t activeDataRequest =
+            { INVALID_bTag,   // bTag
+              0,              // numBytesRemaining
+              0   };          // numBytesTransferred
 
 /// Buffer used for TMCC data
 COMPILER_WORD_ALIGNED static DeviceDataResponse_t deviceDataResponse;
@@ -121,22 +125,6 @@ static void abort_tmc_bulkIN_transfer(void);
 static void main_req_dev_dep_msg_in_sent( udd_ep_status_t status,
                                           iram_size_t nb_transfered,
                                           udd_ep_id_t ep );
-
-////////////////////////////////////////////////////////////////////////////////
-/// \brief Helper function used to write a uint32 value to a 32-bit field least-
-///        significant Byte first
-///
-/// \param source  Value to write
-/// \param dest    Field to receive source with least-significant Byte first
-inline static void write_uint32_lsb_first( uint32_t source, uint32_t* dest )
-{
-   uint8_t* buffer = (uint8_t*)dest;
-   buffer[0] = (uint8_t)(source);
-   buffer[1] = (uint8_t)(source >>  8);
-   buffer[2] = (uint8_t)(source >> 16);
-   buffer[3] = (uint8_t)(source >> 24);
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 bool main_tmc_enable(void)
@@ -152,7 +140,7 @@ bool main_tmc_enable(void)
 ////////////////////////////////////////////////////////////////////////////////
 void main_tmc_disable(void)
 {
-   g_bulkIN_xfer_active = false;
+   abort_tmc_bulkIN_transfer();  // Abort any active transfer
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -215,17 +203,24 @@ void main_check_abort_bulkOUT_status(void)
 ////////////////////////////////////////////////////////////////////////////////
 void main_initiate_abort_bulkIN(void)
 {
-   // Populate fields of the response
-   g_bulk_abort_response.initiate_abort.usbtmc_status =
-                  g_bulkIN_xfer_active ? TMC_STATUS_SUCCESS :
-                                           TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
-   g_bulk_abort_response.initiate_abort.bTag = activeDataRequest.bTag;
+   // If a BulkIN transfer is active, stop it; otherwise, indicate that there
+   // is no transfer active
+   if ( INVALID_bTag != activeDataRequest.bTag )
+   {
+      abort_tmc_bulkIN_transfer();     // Reset the active transfer
+      g_bulk_abort_response.initiate_abort.usbtmc_status = TMC_STATUS_SUCCESS;
+   }
+   {
+      g_bulk_abort_response.initiate_abort.usbtmc_status =
+                                          TMC_STATUS_TRANSFER_NOT_IN_PROGRESS;
+   }
 
-   abort_tmc_bulkIN_transfer();
+   g_bulk_abort_response.initiate_abort.bTag = activeDataRequest.bTag;
 
    udd_g_ctrlreq.payload = (uint8_t*)&g_bulk_abort_response.initiate_abort;
    udd_g_ctrlreq.payload_size = sizeof(TMC_initiate_abort_bulk_xfer_response_t);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 void main_check_abort_bulkIN_status(void)
@@ -256,8 +251,10 @@ void main_initiate_clear(void)
 ////////////////////////////////////////////////////////////////////////////////
 void main_check_clear_status(void)
 {
-   // NOTE: This function doesn't presently do anything special since buffers
+   // NOTE: This function presently doesn't do anything special since buffers
    //       are cleared more or less instantaneously.
+
+   // TODO: clear sample buffers
 
    g_bulk_abort_response.check_clear.usbtmc_status = TMC_STATUS_SUCCESS;
    g_bulk_abort_response.check_clear.bmClear = 0;
@@ -306,7 +303,11 @@ int main(void)
  */
 void abort_tmc_bulkIN_transfer(void)
 {
-   // TODO: this may need to get more complex later
+   // Reset the active transfer
+   activeDataRequest.bTag = INVALID_bTag;
+   activeDataRequest.numBytesRemaining = 0;
+   activeDataRequest.numBytesTransferred = 0;
+
    g_bulkIN_xfer_active = false;
 
    // Tell the dev board API that we are disconnected (uses the API defined for
@@ -323,6 +324,7 @@ bool main_req_dev_dep_msg_in_received(
                                                    &deviceDataResponse.header;
    TMC_bulkIN_header_t* bulkInHeader = &responseHeader->header;
    uint32_t numBytesTransferred;
+   uint32_t residue = 0;
 
    ui_ledOn();    // Light the LED
 
@@ -330,7 +332,19 @@ bool main_req_dev_dep_msg_in_received(
    if ( activeDataRequest.bTag != header->header.bTag )
    {
       activeDataRequest.bTag = header->header.bTag;
-      activeDataRequest.numBytesRemaining = header->transferSize;
+
+      // Disallow requests for less data than exists in a sample
+      if ( header->transferSize < ADC_BYTES_PER_SAMPLE )
+      {
+         return 0;
+      }
+
+      // Only support requests for multiples of the sample size.  For odd
+      // transfer requests, round down to the next multiple (e.g. given a
+      // sample size of 4 Bytes and a request for 7 Bytes: behave as if only
+      // 4 Bytes were requested
+      residue = header->transferSize % ADC_BYTES_PER_SAMPLE;
+      activeDataRequest.numBytesRemaining = header->transferSize - residue;
       activeDataRequest.numBytesTransferred = 0;
    }
 
@@ -341,7 +355,7 @@ bool main_req_dev_dep_msg_in_received(
       //   A request is active, but all requested data Bytes have been
       //   transferred.  This should never happen, and it indicates the host
       //   driver may not be well-behaved.  Return false to signal an error.
-      return false;
+      return 0;
    }
 
    // Copy sample data into the message
@@ -349,6 +363,10 @@ bool main_req_dev_dep_msg_in_received(
    numBytesTransferred = adc_readSamples( deviceDataResponse.data,
                                      min(activeDataRequest.numBytesRemaining,
                                          DEVICE_DATA_BUFFER_SIZE) );
+
+   // Update request state
+   activeDataRequest.numBytesRemaining -= numBytesTransferred;
+   activeDataRequest.numBytesTransferred += numBytesTransferred;
 
    //-------------------------------------------------
    // Set up the response BulkIN header
@@ -367,12 +385,8 @@ bool main_req_dev_dep_msg_in_received(
    responseHeader->bmTransferAttributes =
                         (activeDataRequest.numBytesRemaining > 0) ? 0 : 1;
    responseHeader->reserved[0] = 0;
+   responseHeader->reserved[1] = 0;
    responseHeader->reserved[2] = 0;
-   responseHeader->reserved[3] = 0;
-
-   // Update request state
-   activeDataRequest.numBytesRemaining -= numBytesTransferred;
-   activeDataRequest.numBytesTransferred += numBytesTransferred;
 
    // Send the response
    return 1 == udi_tmc_bulk_in_run( (uint8_t*)&deviceDataResponse,
